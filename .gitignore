@@ -1,0 +1,36 @@
+.DS_Store
+MANIFEST
+__pycache__
+.coverage
+.tox/
+*.egg-info
+*.pot
+*.py[co]
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# cimo +
+.cache
+.config
+.local
+.ms_cronjob-volume
+.pki
+.nv
+.dbus
+.lmstudio
+.lmstudio-home-pointer
+certificate/*
+!certificate/.gitkeep
+certificate/proxy/*
+!certificate/proxy/.gitkeep
