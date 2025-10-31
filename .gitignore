@@ -23,12 +23,11 @@ pnpm-debug.log*
 # cimo +
 .cache
 .config
-.local
-.ms_cronjob-volume
-.pki
-.nv
 .dbus
 .lmstudio
+.ms_cronjob-volume
+.nv
+.pki
 .lmstudio-home-pointer
 certificate/*
 !certificate/.gitkeep
