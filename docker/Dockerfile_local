@@ -63,6 +63,10 @@ RUN cd ~ \
     xdg-utils \
     dbus \
     dbus-x11 \
+    # LM studio
+    && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
+    && chown -R node:node "/home/lm_studio.AppImage" \
+    && chmod +x "/home/lm_studio.AppImage" \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
@@ -75,11 +79,13 @@ USER node
 WORKDIR ${PATH_ROOT}
 
 # Tls
-#CMD cp -r ${PATH_ROOT}.ms_cronjob-volume/certificate/* ${PATH_ROOT}certificate/ \
-# Nvidia
-CMD nvidia-smi \
+CMD cp -r ${PATH_ROOT}.ms_cronjob-volume/certificate/* ${PATH_ROOT}certificate/ \
+    # Nvidia
+    && command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU." \
     # Vulkan
-    && glxinfo | grep "OpenGL renderer string" \
+    && command -v vulkaninfo > /dev/null && vulkaninfo | grep "deviceName" || echo "Host without vulkan support." \
+    # OpenGL
+    && command -v glxinfo > /dev/null && glxinfo | grep "OpenGL renderer string" || echo "Host without opengl support." \
     # Keep running
     && tail -f /dev/null
 

@@ -1,6 +1,6 @@
 services:
-  cimo_ms_lm_studio:
-    container_name: cimo-ms-lm-studio
+  cimo_ms_ai:
+    container_name: cimo-ms-ai
     env_file:
       - ./env/local.env
     build:
@@ -17,14 +17,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./:${PATH_ROOT}
-      #- ms_cronjob-volume:${PATH_ROOT}.ms_cronjob-volume/:ro
+      - ms_cronjob-volume:${PATH_ROOT}.ms_cronjob-volume/:ro
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
     cap_add:
       - SYS_ADMIN
     devices:
       - /dev/fuse:/dev/fuse
-      - /dev/dri:/dev/dri
-    runtime: nvidia
 volumes:
   ms_cronjob-volume:
