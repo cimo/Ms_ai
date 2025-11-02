@@ -1,6 +1,6 @@
 services:
-  cimo_ms_ai:
-    container_name: cimo-ms-ai
+  cimo_ms_ai_gpu:
+    container_name: cimo-ms-ai-gpu
     env_file:
       - ./env/local.env
     build:
