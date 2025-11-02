@@ -40,7 +40,7 @@ RUN cd ~ \
     fonts-noto \
     fonts-noto-cjk \
     media-types \
-    # Gui
+    # GPU
     fuse \
     libfuse2 \
     libglib2.0-0 \
