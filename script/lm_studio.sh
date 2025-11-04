@@ -2,4 +2,4 @@
 
 eval "$(dbus-launch --auto-syntax)"
 
-"/home/lm_studio.AppImage" --no-sandbox
+"/home/squashfs-root/lm-studio"  --no-sandbox

@@ -19,6 +19,7 @@ ENV DEBCONF_NOWARNINGS=yes
 ENV SUDO_FORCE_REMOVE=yes
 
 COPY ./certificate/proxy/ /usr/local/share/ca-certificates/
+COPY ./docker/NotoSansJP-Regular.ttf /usr/share/fonts/truetype/noto/
 
 RUN cd ~ \
     # No root
@@ -37,12 +38,8 @@ RUN cd ~ \
     && apt-get install -y nodejs \
     # Apt
     && apt-get update && apt-get install -y \
-    fonts-noto \
-    fonts-noto-cjk \
     media-types \
     # GPU
-    fuse \
-    libfuse2 \
     libglib2.0-0 \
     libgtk-3-0 \
     libnss3 \
@@ -65,8 +62,11 @@ RUN cd ~ \
     dbus-x11 \
     # LM studio
     && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
-    && chown -R node:node "/home/lm_studio.AppImage" \
+    && cd /home/ \
     && chmod +x "/home/lm_studio.AppImage" \
+    && "/home/lm_studio.AppImage" --appimage-extract \
+    && chown -R node:node "/home/squashfs-root/" \
+    && cd ~ \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
