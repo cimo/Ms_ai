@@ -49,12 +49,16 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
     - .dbus
     - .lmstudio
     - .ms_cronjob-volume
+    - .npm
     - .nv
     - .pki
     - .lmstudio-home-pointer
     - certificate/tls.crt
     - certificate/tls.key
     - certificate/tls.pem
+    - dist
+    - node_modules
+    - package-lock.json
 
 2. Follow the "Installation" instructions.
 
