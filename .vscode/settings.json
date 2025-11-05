@@ -1,5 +1,5 @@
 {
-    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.tsdk": "mcp/example/node_modules/typescript/lib",
     "l13Diff.exclude": [
         ".git",
         ".cache",
@@ -7,9 +7,13 @@
         ".dbus",
         ".lmstudio",
         ".ms_cronjob-volume",
+        ".npm",
         ".nv",
         ".pki",
-        ".lmstudio-home-pointer"
+        ".lmstudio-home-pointer",
+        "dist",
+        "node_modules",
+        "package-lock.json"
     ],
     "l13Diff.ignoreEndOfLine": false,
     "l13Diff.ignoreTrimWhitespace": "default",
