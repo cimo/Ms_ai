@@ -1,15 +1,23 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { FastMCP } from "fastmcp";
 import { z } from "zod";
 
-const server = new McpServer({
-    name: "example-server",
+const server = new FastMCP({
+    name: "Example",
     version: "1.0.0"
 });
 
-server.tool("sum", "Do the sum with 2 numbers.", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
-    content: [{ type: "text", text: `${a + b}` }]
-}));
+server.addTool({
+    name: "sum",
+    description: "Sum 2 numbers.",
+    parameters: z.object({
+        a: z.number(),
+        b: z.number()
+    }),
+    execute: async (argument: { a: number; b: number }) => {
+        return String(argument.a + argument.b);
+    }
+});
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+server.start({
+    transportType: "stdio"
+});
