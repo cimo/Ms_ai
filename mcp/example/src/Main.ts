@@ -7,12 +7,7 @@ const server = new McpServer({
     version: "1.0.0"
 });
 
-server.tool("sum", "Do the sum with 2 numbers.", 
-z.object({
-        a: z.number(),
-        b: z.number()
-    }),
-, async ({ a, b }) => ({
+server.tool("sum", "Do the sum with 2 numbers.", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
     content: [{ type: "text", text: `${a + b}` }]
 }));
 
