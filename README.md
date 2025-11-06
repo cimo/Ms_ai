@@ -3,6 +3,7 @@
 Microservice ai.
 
 Depend from Ms_cronjob (use the volume "ms_cronjob-volume" for share the certificate).
+It's possible use personal certificate instead "Ms_cronjob", just put the certificate in ".ms_cronjob-volume" folder before the build.
 
 ## Info:
 
@@ -48,14 +49,10 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
     - .config
     - .dbus
     - .lmstudio
-    - .ms_cronjob-volume
     - .npm
     - .nv
     - .pki
     - .lmstudio-home-pointer
-    - certificate/tls.crt
-    - certificate/tls.key
-    - certificate/tls.pem
     - dist
     - node_modules
     - package-lock.json

@@ -1,12 +1,12 @@
 {
     "mcpServers": {
-        "example-server": {
+        "example": {
             "command": "node",
             "args": [
-                "/home/app/mcp/example/dist/src/Main.js"
+                "/home/app/mcp/example/dist/src/controller/Server.js"
             ],
             "env": {
-                "ENV_EXAMPLE": "example"
+                "MCP_EXAMPLE": "example"
             }
         }
     }
