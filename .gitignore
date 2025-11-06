@@ -25,15 +25,12 @@ pnpm-debug.log*
 .config
 .dbus
 .lmstudio
-.ms_cronjob-volume
 .npm
 .nv
 .pki
 .lmstudio-home-pointer
-certificate/*
-!certificate/.gitkeep
-certificate/proxy/*
-!certificate/proxy/.gitkeep
 dist
+log/*
+!log/.gitkeep
 node_modules
 package-lock.json
