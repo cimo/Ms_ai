@@ -15,8 +15,8 @@
         "log",
         "mcp",
         "node_modules",
-        "public",
         "package-lock.json",
+        "public",
         "src"
     ],
     "l13Diff.ignoreEndOfLine": false,
