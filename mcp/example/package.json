@@ -16,7 +16,10 @@
         "build": "npm audit && npm run build_tsc && npm run check",
         "execute": "nodemon --config nodemon.json"
     },
-    "dependencies": {},
+    "dependencies": {
+        "fastmcp": "3.22.0",
+        "zod": "4.1.12"
+    },
     "devDependencies": {
         "typescript": "5.7.2",
         "eslint": "9.31.0",
@@ -26,9 +29,7 @@
         "prettier": "3.4.2",
         "globals": "15.13.0",
         "nodemon": "3.1.9",
-        "@types/node": "22.10.2",
-        "fastmcp": "3.22.0",
-        "zod": "4.1.12"
+        "@types/node": "22.10.2"
     },
     "resolutions": {}
 }
