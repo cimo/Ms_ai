@@ -5,8 +5,8 @@
     "author": "cimo",
     "license": "MIT",
     "repository": {
-        "type": "",
-        "url": ""
+        "type": "git",
+        "url": "git+https://github.com/cimo/Mcp_example.git"
     },
     "scripts": {
         "preinstall": "npx npm-force-resolutions",
