@@ -25,6 +25,9 @@ pnpm-debug.log*
 .config
 .dbus
 .lmstudio
+.ms_cronjob-volume/**/*
+!.ms_cronjob-volume/**/
+!.ms_cronjob-volume/**/.gitkeep
 .npm
 .nv
 .pki
