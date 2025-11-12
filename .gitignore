@@ -35,5 +35,9 @@ pnpm-debug.log*
 dist
 log/*
 !log/.gitkeep
+mcp/**/*
+!mcp/**/
+!mcp/example/*
+!mcp/mcp.json
 node_modules
 package-lock.json
