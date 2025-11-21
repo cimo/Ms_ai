@@ -47,6 +47,7 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
     - .config
     - .dbus
     - .lmstudio
+    - .local
     - .npm
     - .nv
     - .pki

@@ -6,6 +6,7 @@ ARG _TIME_ZONE
 ARG _LANG
 ARG _SERVER_PORT
 ARG _PATH_ROOT
+ARG _VERSION_TAG
 
 ENV ENV_NAME=${_ENV_NAME}
 ENV DOMAIN=${_DOMAIN}
@@ -13,6 +14,7 @@ ENV TZ=${_TIME_ZONE}
 ENV LANG=${_LANG}
 ENV SERVER_PORT=${_SERVER_PORT}
 ENV PATH_ROOT=${_PATH_ROOT}
+ENV VERSION_TAG=${_VERSION_TAG}
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NOWARNINGS=yes
@@ -24,6 +26,7 @@ ENV VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
 
 COPY ./.ms_cronjob-volume/certificate/* /usr/local/share/ca-certificates/
 COPY ./docker/NotoSansJP-Regular.ttf /usr/share/fonts/truetype/noto/
+COPY ./ ${PATH_ROOT}
 
 RUN cd ~ \
     # No root
@@ -87,15 +90,18 @@ USER node
 
 WORKDIR ${PATH_ROOT}
 
+# Npm
+RUN rm -rf ${PATH_ROOT}node_modules/ ${PATH_ROOT}package-lock.json \
+    && npm install \
+    && npm run build
+
 # Nvidia
 CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU." \
     # Vulkan
     && command -v vulkaninfo > /dev/null && vulkaninfo | grep "deviceName" || echo "Host without vulkan support." \
     # OpenGL
     && command -v glxinfo > /dev/null && glxinfo | grep "OpenGL renderer string" || echo "Host without opengl support." \
-    # Npm
-    && rm -rf ${PATH_ROOT}node_modules/ ${PATH_ROOT}package-lock.json \
-    && npm install \
-    && npm run execute
+    # Node
+    && node ${PATH_ROOT}dist/src/controller/Server.js
 
 EXPOSE ${SERVER_PORT}
