@@ -79,6 +79,10 @@ RUN cd ~ \
     && "/home/lm_studio.AppImage" --appimage-extract \
     && chown -R node:node "/home/squashfs-root/" \
     && cd ~ \
+    # Chrome
+    && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /home/chrome.deb \
+    && apt-get update && apt-get install -y /home/chrome.deb \
+    && rm /home/chrome.deb \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
