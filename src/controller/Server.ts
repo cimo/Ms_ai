@@ -95,9 +95,6 @@ export default class Server {
         const server = creation;
 
         server.listen(helperSrc.SERVER_PORT, () => {
-            //const controllerAntivirus = new ControllerAntivirus(this.app, this.limiter);
-            //controllerAntivirus.api();
-
             helperSrc.writeLog(
                 "Server.ts - createServer() - listen()",
                 `Port: ${helperSrc.SERVER_PORT} - Time: ${helperSrc.localeFormat(new Date())}`
