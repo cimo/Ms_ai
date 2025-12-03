@@ -19,7 +19,6 @@
     "dependencies": {
         "@cimo/authentication": "1.1.25",
         "@cimo/environment": "1.0.18",
-        "@cimo/form-data_parser": "1.1.33",
         "@cimo/cronjob": "1.0.5",
         "express": "4.22.1",
         "express-rate-limit": "7.5.0",
