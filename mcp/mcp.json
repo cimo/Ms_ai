@@ -2,9 +2,7 @@
     "mcpServers": {
         "example": {
             "command": "node",
-            "args": [
-                "/home/app/mcp/example/dist/src/controller/Server.js"
-            ],
+            "args": ["/home/app/mcp/example/dist/src/Main.js"],
             "env": {
                 "MCP_EXAMPLE": "example"
             }

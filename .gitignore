@@ -39,6 +39,6 @@ log/*
 mcp/*
 !mcp/git.sh
 !mcp/.gitkeep
-!mcp/mcp_example.json
+!mcp/mcp.json
 node_modules
 package-lock.json
