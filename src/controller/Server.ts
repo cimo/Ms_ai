@@ -5,12 +5,12 @@ import Cors from "cors";
 import * as Http from "http";
 import * as Https from "https";
 import Fs from "fs";
-import { Ca } from "@cimo/authentication/dist/src/Main";
-import { Cc } from "@cimo/cronjob/dist/src/Main";
+import { Ca } from "@cimo/authentication/dist/src/Main.js";
+import { Cc } from "@cimo/cronjob/dist/src/Main.js";
 
 // Source
-import * as helperSrc from "../HelperSrc";
-import * as modelServer from "../model/Server";
+import * as helperSrc from "../HelperSrc.js";
+import * as modelServer from "../model/Server.js";
 
 export default class Server {
     // Variable
@@ -95,10 +95,7 @@ export default class Server {
         const server = creation;
 
         server.listen(helperSrc.SERVER_PORT, () => {
-            helperSrc.writeLog(
-                "Server.ts - createServer() - listen()",
-                `Port: ${helperSrc.SERVER_PORT} - Time: ${helperSrc.localeFormat(new Date())}`
-            );
+            helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 if (request.accepts("html")) {
