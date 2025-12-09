@@ -18,7 +18,8 @@
         "skipLibCheck": true,
         "removeComments": true,
         "sourceMap": true,
-        "noPropertyAccessFromIndexSignature": true
+        "noPropertyAccessFromIndexSignature": true,
+        "isolatedModules": true
     },
     "include": [
         "eslint.customRule.ts",
