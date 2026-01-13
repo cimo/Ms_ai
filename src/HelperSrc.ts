@@ -30,9 +30,6 @@ export const PATH_SCRIPT = Ce.checkVariable("MS_AI_PATH_SCRIPT");
 export const MIME_TYPE = Ce.checkVariable("MS_AI_MIME_TYPE") || (process.env["MS_A_MIME_TYPE"] as string);
 export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.env["MS_A_FILE_SIZE_MB"] as string);
 
-export const REQUEST_TIMEOUT = 60000;
-export const REQUEST_IS_ENCODED = false;
-
 export const localeConfiguration: Record<string, { locale: string; currency: string; dateFormat: string }> = {
     // Asia
     jp: { locale: "ja-JP", currency: "JPY", dateFormat: "a" },
