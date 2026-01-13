@@ -1,4 +1,4 @@
-import Express, { Response } from "express";
+import Express, { Request, Response } from "express";
 import { RateLimitRequestHandler } from "express-rate-limit";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
 
@@ -13,6 +13,11 @@ export default class LmStudio {
     private limiter: RateLimitRequestHandler;
 
     // Method
+    private dataDone = (response: Response): void => {
+        response.write("event: done\ndata: [DONE]\n\n");
+        response.end();
+    };
+
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
@@ -31,6 +36,56 @@ export default class LmStudio {
                 })
                 .catch((error: Error) => {
                     helperSrc.responseBody("", error, response, 500);
+                });
+        });
+
+        this.app.post("/api/v1/chat/completions", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            response.setHeader("Content-Type", "text/event-stream");
+            response.setHeader("Cache-Control", "no-cache");
+            response.setHeader("Connection", "keep-alive");
+            response.setHeader("X-Accel-Buffering", "no");
+
+            Instance.api
+                .stream(
+                    "/v1/chat/completions",
+                    {
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    },
+                    request.body
+                )
+                .then(async (reader) => {
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+
+                        if (done) {
+                            this.dataDone(response);
+
+                            break;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lineList = buffer.split(/\r?\n/);
+                        buffer = lineList.pop() || "";
+
+                        for (const line of lineList) {
+                            if (line.startsWith("data:")) {
+                                const data = line.slice(5).trim();
+
+                                if (data === "[DONE]") {
+                                    this.dataDone(response);
+
+                                    return;
+                                }
+
+                                response.write(`data: ${data}\n\n`);
+                            }
+                        }
+                    }
                 });
         });
     };
