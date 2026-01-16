@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "Tool server": {
+            "command": "node",
+            "args": ["/home/app/mcp_server/dist/src/Main.js"],
+            "env": {
+                "MCP_TOOL_SERVER": "example"
+            }
+        }
+    }
+}

@@ -1,12 +1,12 @@
 {
-    "name": "@cimo/mcp_example",
+    "name": "@cimo/mcp_tool_server",
     "version": "1.0.0",
-    "description": "MCP server example.",
+    "description": "MCP tool server.",
     "author": "cimo",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/cimo/Mcp_example.git"
+        "url": "git+https://github.com/cimo/Mcp_tool_server.git"
     },
     "type": "module",
     "scripts": {
@@ -18,8 +18,8 @@
         "execute": "nodemon --config nodemon.json"
     },
     "dependencies": {
-        "fastmcp": "3.25.0",
-        "zod": "4.1.13"
+        "fastmcp": "3.26.9",
+        "zod": "4.3.5"
     },
     "devDependencies": {
         "typescript": "5.7.2",

@@ -36,9 +36,9 @@ pnpm-debug.log*
 dist
 log/*
 !log/.gitkeep
-mcp/*
-!mcp/git.sh
-!mcp/.gitkeep
-!mcp/mcp.json
+mcp_server/src/tool/*
+!mcp_server/src/tool/git.sh
+!mcp_server/src/tool/.gitkeep
+!mcp_server/src/tool/Math
 node_modules
 package-lock.json

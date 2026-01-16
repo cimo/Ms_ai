@@ -73,6 +73,8 @@ RUN cd ~ \
     libx11-xcb1 \
     libcairo2 \
     # LM studio
+    && apt-get update && apt-get install -y \ 
+    xvfb \
     && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
     && cd /home/ \
     && chmod +x "/home/lm_studio.AppImage" \
@@ -99,12 +101,12 @@ RUN rm -rf ${PATH_ROOT}node_modules/ ${PATH_ROOT}package-lock.json \
     && npm install \
     && npm run build
 
-# Nvidia
+# Command
 CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU." \
-    # Vulkan
     && command -v vulkaninfo > /dev/null && vulkaninfo | grep "deviceName" || echo "Host without vulkan support." \
-    # OpenGL
     && command -v glxinfo > /dev/null && glxinfo | grep "OpenGL renderer string" || echo "Host without opengl support." \
+    # LM studio
+    && bash ${PATH_ROOT}script/lm_studio.sh "headless" \
     # Node
     && node ${PATH_ROOT}dist/src/controller/Server.js
 

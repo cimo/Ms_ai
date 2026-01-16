@@ -1,5 +1,5 @@
 {
-    "typescript.tsdk": "mcp/example/node_modules/typescript/lib",
+    "typescript.tsdk": "mcp_server/node_modules/typescript/lib",
     "l13Diff.exclude": [
         ".git",
         ".cache",
@@ -13,7 +13,7 @@
         "dist",
         "file",
         "log",
-        "mcp",
+        "mcp_server/src/tool",
         "node_modules",
         "package-lock.json",
         "public",
