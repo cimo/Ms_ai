@@ -1,12 +1,12 @@
 {
-    "name": "ms_antivirus",
+    "name": "ms_ai",
     "version": "1.0.0",
-    "description": "Microservice antivirus.",
+    "description": "Microservice ai.",
     "author": "cimo",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/cimo/Ms_antivirus.git"
+        "url": "git+https://github.com/cimo/Ms_ai.git"
     },
     "type": "module",
     "scripts": {
