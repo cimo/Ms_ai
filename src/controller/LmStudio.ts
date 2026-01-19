@@ -18,56 +18,6 @@ export default class LmStudio {
         response.end();
     };
 
-    private stream = (endpoint: string, request: Request, response: Response): void => {
-        response.setHeader("Content-Type", "text/event-stream");
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("Connection", "keep-alive");
-        response.setHeader("X-Accel-Buffering", "no");
-
-        Instance.api
-            .stream(
-                endpoint,
-                {
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                },
-                request.body
-            )
-            .then(async (reader) => {
-                const decoder = new TextDecoder("utf-8");
-                let buffer = "";
-
-                while (true) {
-                    const { value, done } = await reader.read();
-
-                    if (done) {
-                        this.dataDone(response);
-
-                        break;
-                    }
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lineList = buffer.split(/\r?\n/);
-                    buffer = lineList.pop() || "";
-
-                    for (const line of lineList) {
-                        if (line.startsWith("data:")) {
-                            const data = line.slice(5).trim();
-
-                            if (data === "[DONE]") {
-                                this.dataDone(response);
-
-                                return;
-                            }
-
-                            response.write(`data: ${data}\n\n`);
-                        }
-                    }
-                }
-            });
-    };
-
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
@@ -89,12 +39,54 @@ export default class LmStudio {
                 });
         });
 
-        this.app.post("/api/v1/chat/completions", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-            this.stream("/v1/chat/completions", request, response);
-        });
-
         this.app.post("/api/v1/responses", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-            this.stream("/v1/responses", request, response);
+            response.setHeader("Content-Type", "text/event-stream");
+            response.setHeader("Cache-Control", "no-cache");
+            response.setHeader("Connection", "keep-alive");
+            response.setHeader("X-Accel-Buffering", "no");
+
+            Instance.api
+                .stream(
+                    "/v1/responses",
+                    {
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    },
+                    request.body
+                )
+                .then(async (reader) => {
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+
+                        if (done) {
+                            this.dataDone(response);
+
+                            break;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lineList = buffer.split(/\r?\n/);
+                        buffer = lineList.pop() || "";
+
+                        for (const line of lineList) {
+                            if (line.startsWith("data:")) {
+                                const data = line.slice(5).trim();
+
+                                if (data === "[DONE]") {
+                                    this.dataDone(response);
+
+                                    return;
+                                }
+
+                                response.write(`data: ${data}\n\n`);
+                            }
+                        }
+                    }
+                });
         });
     };
 }

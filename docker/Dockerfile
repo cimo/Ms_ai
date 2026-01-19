@@ -73,7 +73,7 @@ RUN cd ~ \
     libx11-xcb1 \
     libcairo2 \
     # LM studio
-    && apt-get update && apt-get install -y \ 
+    && apt-get update && apt-get install -y \
     xvfb \
     && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
     && cd /home/ \
@@ -107,6 +107,8 @@ CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=cs
     && command -v glxinfo > /dev/null && glxinfo | grep "OpenGL renderer string" || echo "Host without opengl support." \
     # LM studio
     && bash ${PATH_ROOT}script/lm_studio.sh "headless" \
+    # Mcp
+    && bash ${PATH_ROOT}script/mcp.sh "node" \
     # Node
     && node ${PATH_ROOT}dist/src/controller/Server.js
 
