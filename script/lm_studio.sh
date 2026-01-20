@@ -11,11 +11,11 @@ then
     Xvfb :99 -screen 0 1024x768x24 &
     export DISPLAY=:99
 
-    "/home/squashfs-root/lm-studio" --no-sandbox --headless --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check > /dev/null 2>&1 &
+    "/home/squashfs-root/lm-studio" --no-sandbox --headless --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lmstudio.log 2>&1 &
 else
     eval "$(dbus-launch --auto-syntax)"
 
-    "/home/squashfs-root/lm-studio" --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check > /dev/null 2>&1 &
+    "/home/squashfs-root/lm-studio" --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lmstudio.log 2>&1 &
 fi
 
 sleep 3
@@ -24,5 +24,11 @@ sleep 3
 
 sleep 3
 
-"/home/app/.lmstudio/bin/lms" load qwen3-1.7b
-"/home/app/.lmstudio/bin/lms" load nanonets-ocr-s
+modelList=$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ',' ' ')
+
+for model in ${modelList}
+do
+    sleep 3
+
+    "/home/app/.lmstudio/bin/lms" load ${model}
+done
