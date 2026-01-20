@@ -1,6 +1,7 @@
 import Express, { Request, Response } from "express";
 import { RateLimitRequestHandler } from "express-rate-limit";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
+import { Cu } from "@cimo/queue/dist/src/Main.js";
 
 // Source
 import * as Instance from "../Instance.js";
@@ -45,48 +46,69 @@ export default class LmStudio {
             response.setHeader("Connection", "keep-alive");
             response.setHeader("X-Accel-Buffering", "no");
 
-            Instance.api
-                .stream(
-                    "/v1/responses",
-                    {
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    },
-                    request.body
-                )
-                .then(async (reader) => {
-                    const decoder = new TextDecoder("utf-8");
-                    let buffer = "";
+            Cu.list.push(() => {
+                return new Promise((resolve) => {
+                    request.on("close", () => {
+                        this.dataDone(response);
 
-                    while (true) {
-                        const { value, done } = await reader.read();
+                        resolve();
+                    });
 
-                        if (done) {
-                            this.dataDone(response);
+                    Instance.api
+                        .stream(
+                            "/v1/responses",
+                            {
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            },
+                            request.body
+                        )
+                        .then(async (reader) => {
+                            const decoder = new TextDecoder("utf-8");
+                            let buffer = "";
 
-                            break;
-                        }
+                            while (true) {
+                                const { value, done } = await reader.read();
 
-                        buffer += decoder.decode(value, { stream: true });
-                        const lineList = buffer.split(/\r?\n/);
-                        buffer = lineList.pop() || "";
-
-                        for (const line of lineList) {
-                            if (line.startsWith("data:")) {
-                                const data = line.slice(5).trim();
-
-                                if (data === "[DONE]") {
+                                if (done) {
                                     this.dataDone(response);
 
-                                    return;
+                                    resolve();
+
+                                    break;
                                 }
 
-                                response.write(`data: ${data}\n\n`);
+                                buffer += decoder.decode(value, { stream: true });
+                                const lineList = buffer.split(/\r?\n/);
+                                buffer = lineList.pop() || "";
+
+                                for (const line of lineList) {
+                                    if (line.startsWith("data:")) {
+                                        const data = line.slice(5).trim();
+
+                                        if (data === "[DONE]") {
+                                            this.dataDone(response);
+
+                                            resolve();
+
+                                            return;
+                                        }
+
+                                        response.write(`data: ${data}\n\n`);
+                                    }
+                                }
                             }
-                        }
-                    }
+                        })
+                        .catch(() => {
+                            this.dataDone(response);
+
+                            resolve();
+                        });
                 });
+            });
+
+            Cu.processSerial();
         });
     };
 }

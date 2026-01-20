@@ -3,7 +3,7 @@ import { Cr } from "@cimo/request/dist/src/Main.js";
 // Source
 import * as HelperSrc from "./HelperSrc.js";
 
-export const api = new Cr(`${HelperSrc.URL_ENDPOINT || ""}`);
+export const api = new Cr(`${HelperSrc.URL_OPEN_AI || ""}`);
 
 api.setRequestInterceptor((config: RequestInit) => {
     return requestLogic(config);
