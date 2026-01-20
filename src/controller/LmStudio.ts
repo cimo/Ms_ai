@@ -108,7 +108,7 @@ export default class LmStudio {
                 });
             });
 
-            Cu.processSerial();
+            Cu.processParallel(2);
         });
     };
 }
