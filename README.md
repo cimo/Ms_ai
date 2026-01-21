@@ -57,9 +57,3 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
     - package-lock.json
 
 2. Follow the "Installation" instructions.
-
-3. For execute "LM studio" GUI write on terminal:
-
-    ```
-    bash script/lm_studio.sh
-    ```
