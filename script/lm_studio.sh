@@ -20,10 +20,10 @@ then
     Xvfb :99 -screen 0 1024x768x24 &
     export DISPLAY=:99
 
-    "${pathLmStudio}" --no-sandbox --headless --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
-else
-    "${pathLmStudio}" --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
+    sleep 3
 fi
+
+"${pathLmStudio}" --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
 
 if [ -x "${pathLms}" ]
 then
