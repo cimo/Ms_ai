@@ -39,10 +39,10 @@ then
     do
         sleep 3
 
-        "${pathLms}" get ${model}@q8_0 --yes
+        "${pathLms}" get "${model}@q8_0" --yes
 
         sleep 3
 
-        "${pathLms}" load ${model}
+        "${pathLms}" load "${model}"
     done
 fi

@@ -40,5 +40,6 @@ mcp_server/src/tool/*
 !mcp_server/src/tool/git.sh
 !mcp_server/src/tool/.gitkeep
 !mcp_server/src/tool/Math
+!mcp_server/src/tool/Math.ts
 node_modules
 package-lock.json
