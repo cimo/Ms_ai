@@ -2,7 +2,7 @@ import { FastMCP } from "fastmcp";
 
 // Source
 import * as modelMain from "./model/Main.js";
-import toolMathSum from "./tool/Math/Sum.js";
+import { toolSum, toolExpression } from "./tool/Math.js";
 
 export const URL_MCP = new URL(process.env["MS_AI_URL_MCP"] as string);
 
@@ -11,7 +11,8 @@ const server = new FastMCP<modelMain.Auth>({
     version: "1.0.0"
 });
 
-server.addTool(toolMathSum);
+server.addTool(toolSum);
+server.addTool(toolExpression);
 
 server.start({
     transportType: "httpStream",
