@@ -121,15 +121,12 @@ export default class Server {
                 helperSrc.responseBody(`Client ip: ${request.clientIp || ""}`, "", response, 200);
             });
 
-            this.app.get("/login", this.limiter, (_request: Request, response: Response) => {
+            this.app.get("/login", this.limiter, async (_request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                controllerMicrosoft.loginWithAuthenticationCode().then((result) => {
-                    // eslint-disable-next-line no-console
-                    console.log("cimo", result);
-                });
+                const result = await controllerMicrosoft.loginWithAuthenticationCode();
 
-                helperSrc.responseBody("Login.", "", response, 200);
+                helperSrc.responseBody(result, "", response, 200);
             });
 
             this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
