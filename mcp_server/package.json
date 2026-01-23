@@ -19,7 +19,8 @@
     },
     "dependencies": {
         "fastmcp": "3.26.9",
-        "zod": "4.3.5"
+        "zod": "4.3.5",
+        "@nut-tree-fork/nut-js": "4.2.6"
     },
     "devDependencies": {
         "typescript": "5.7.2",
