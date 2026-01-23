@@ -21,6 +21,9 @@ export const NODE_ENV = Ce.checkVariable("MS_AI_NODE_ENV") || (process.env["MS_A
 export const URL_ROOT = Ce.checkVariable("MS_AI_URL_ROOT") || (process.env["MS_A_URL_ROOT"] as string);
 export const URL_CORS_ORIGIN = Ce.checkVariable("MS_AI_URL_CORS_ORIGIN") || (process.env["MS_A_URL_CORS_ORIGIN"] as string);
 export const URL_OPEN_AI = Ce.checkVariable("MS_AI_URL_OPEN_AI") || (process.env["MS_AI_URL_OPEN_AI"] as string);
+export const URL_MCP = Ce.checkVariable("MS_AI_URL_MCP") || (process.env["MS_AI_URL_MCP"] as string);
+export const URL_AD_LOGIN = Ce.checkVariable("MS_AI_URL_AD_LOGIN") || (process.env["MS_AI_URL_AD_LOGIN"] as string);
+export const URL_AD_REDIRECT = Ce.checkVariable("MS_AI_URL_AD_REDIRECT") || (process.env["MS_AI_URL_AD_REDIRECT"] as string);
 export const PATH_CERTIFICATE_KEY = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_KEY");
 export const PATH_CERTIFICATE_CRT = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_CRT");
 export const PATH_FILE = Ce.checkVariable("MS_AI_PATH_FILE");
@@ -29,6 +32,14 @@ export const PATH_PUBLIC = Ce.checkVariable("MS_AI_PATH_PUBLIC");
 export const PATH_SCRIPT = Ce.checkVariable("MS_AI_PATH_SCRIPT");
 export const MIME_TYPE = Ce.checkVariable("MS_AI_MIME_TYPE") || (process.env["MS_A_MIME_TYPE"] as string);
 export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.env["MS_A_FILE_SIZE_MB"] as string);
+export const MODEL = Ce.checkVariable("MS_AI_MODEL") || (process.env["MS_AI_MODEL"] as string);
+export const AD_SCOPE = Ce.checkVariable("MS_AI_AD_SCOPE") || (process.env["MS_AI_AD_SCOPE"] as string);
+export const AD_TENANT = Ce.checkVariable("MS_AI_AD_TENANT");
+export const AD_CLIENT = Ce.checkVariable("MS_AI_AD_CLIENT");
+
+Ce.loadFile(`./env/${ENV_NAME}.env.secret`);
+
+export const AD_CLIENT_SECRET = Ce.checkVariable("MS_AI_AD_CLIENT_SECRET");
 
 export const localeConfiguration: Record<string, { locale: string; currency: string; dateFormat: string }> = {
     // Asia

@@ -7,18 +7,21 @@ urlOpenAiPort="${urlOpenAi##*:}"
 pathLmStudio="/home/squashfs-root/lm-studio"
 pathLms="/home/app/.lmstudio/bin/lms"
 
+countDisplay=99
+
 eval "$(dbus-launch --auto-syntax)"
 
 if [ "${1:-}" = "headless" ]
 then
     pkill -f "Xvfb" || true
-    pkill -f "X :99" || true
+    pkill -f "X :${countDisplay}" || true
 
-    rm -f /tmp/.X11-unix/X99
-    rm -f /tmp/.X99-lock
+    rm -f /tmp/.X11-unix/X${countDisplay}
+    rm -f /tmp/.X${countDisplay}-lock
         
-    Xvfb :99 -screen 0 1024x768x24 &
-    export DISPLAY=:99
+    Xvfb :${countDisplay} -screen 0 1920x1080x24 >/dev/null 2>&1 &
+    
+    export DISPLAY=:${countDisplay}
 
     sleep 3
 fi

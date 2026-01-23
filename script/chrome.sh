@@ -1,10 +1,22 @@
 #!/bin/bash
 
+countDisplay=98
+
+eval "$(dbus-launch --auto-syntax)"
+
 if [ "${1:-}" = "headless" ]
 then
-    google-chrome --no-sandbox --headless --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log 2>&1 &
-else
-    eval "$(dbus-launch --auto-syntax)"
+    pkill -f "Xvfb" || true
+    pkill -f "X :${countDisplay}" || true
 
-    google-chrome --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log 2>&1 &
+    rm -f /tmp/.X11-unix/X${countDisplay}
+    rm -f /tmp/.X${countDisplay}-lock
+        
+    Xvfb :${countDisplay} -screen 0 1920x1080x24 >/dev/null 2>&1 &
+    
+    export DISPLAY=:${countDisplay}
+
+    sleep 3
 fi
+
+google-chrome --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log 2>&1 &
