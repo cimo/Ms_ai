@@ -11,6 +11,10 @@ It's possible to use a personal certificate instead of "Ms_cronjob", just add th
 -   X11 for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
 -   LM studio
 
+## Secret
+
+1. Create a file "local.env.secret" in "env" folder and put there all your secret before build the container.
+
 ## Installation
 
 1. For build and up with GPU write on terminal:
@@ -57,3 +61,15 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
     - package-lock.json
 
 2. Follow the "Installation" instructions.
+
+3. For execute "LM studio" GUI write on terminal:
+
+    ```
+    bash script/lm_studio.sh
+    ```
+
+4. For execute "Chrome" GUI write on terminal:
+
+    ```
+    bash script/chrome.sh
+    ```

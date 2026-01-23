@@ -4,6 +4,7 @@ import CookieParser from "cookie-parser";
 import Cors from "cors";
 import * as Http from "http";
 import * as Https from "https";
+
 import Fs from "fs";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
 import { Cc } from "@cimo/cronjob/dist/src/Main.js";
@@ -12,12 +13,14 @@ import { Cc } from "@cimo/cronjob/dist/src/Main.js";
 import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import ControllerLmStudio from "./LmStudio.js";
+import ControllerMicrosoft from "./Microsoft.js";
 
 export default class Server {
     // Variable
     private corsOption: modelServer.Icors;
     private limiter: RateLimitRequestHandler;
     private app: Express.Express;
+    private userObject: Record<string, string>;
 
     // Method
     constructor() {
@@ -46,6 +49,8 @@ export default class Server {
                 return result;
             }
         });
+
+        this.userObject = {};
 
         this.app = Express();
     }
@@ -99,6 +104,9 @@ export default class Server {
             const controllerLmStudio = new ControllerLmStudio(this.app, this.limiter);
             controllerLmStudio.api();
 
+            const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject, controllerLmStudio);
+            controllerMicrosoft.api();
+
             helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
@@ -115,6 +123,11 @@ export default class Server {
 
             this.app.get("/login", this.limiter, (_request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
+
+                controllerMicrosoft.loginWithAuthenticationCode().then((result) => {
+                    // eslint-disable-next-line no-console
+                    console.log("cimo", result);
+                });
 
                 helperSrc.responseBody("Login.", "", response, 200);
             });
