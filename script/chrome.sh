@@ -19,4 +19,4 @@ then
     sleep 3
 fi
 
-google-chrome --load-extension=${PATH_ROOT}docker/microsoft_sso_crx --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --hide-crash-restore-bubble --disable-infobars >> ${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log 2>&1 &
+node ${PATH_ROOT}script/chrome.js "${2}"
