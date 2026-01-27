@@ -14,7 +14,8 @@ const execute = async () => {
         "--no-first-run",
         "--no-default-browser-check",
         "--hide-crash-restore-bubble",
-        "--start-maximized",
+        "--window-position=0,0",
+        "--window-size=1920,1080",
     ];
 
     const flagRdpList = [
