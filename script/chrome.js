@@ -14,6 +14,7 @@ const execute = async () => {
         "--no-first-run",
         "--no-default-browser-check",
         "--hide-crash-restore-bubble",
+        "--start-maximized",
     ];
 
     const flagRdpList = [
@@ -49,7 +50,9 @@ const execute = async () => {
 
         remotePipe.incoming.on("close", () =>
             reject(
-                new Error("Error: remoteDebuggingPipes closed before a response was received."),
+                new Error(
+                    "Error: remoteDebuggingPipes closed before a response was received.",
+                ),
             ),
         );
 
