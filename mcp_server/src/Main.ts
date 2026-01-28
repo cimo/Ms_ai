@@ -1,7 +1,8 @@
 import { FastMCP } from "fastmcp";
 
 // Source
-import { toolMathExpression, toolMathSum } from "./tool/Math.js";
+import { toolMathExpression } from "./tool/Math.js";
+import { toolAutomateMouseMove, toolAutomateMouseClick } from "./tool/Automate.js";
 
 export const URL_MCP = new URL(process.env["MS_AI_URL_MCP"] as string);
 
@@ -11,7 +12,8 @@ const server = new FastMCP<Record<string, unknown>>({
 });
 
 server.addTool(toolMathExpression);
-server.addTool(toolMathSum);
+server.addTool(toolAutomateMouseMove);
+server.addTool(toolAutomateMouseClick);
 
 server.start({
     transportType: "httpStream",

@@ -18,8 +18,8 @@
         "execute": "nodemon --config nodemon.json"
     },
     "dependencies": {
-        "fastmcp": "3.26.9",
-        "zod": "4.3.5",
+        "fastmcp": "3.30.1",
+        "zod": "4.3.6",
         "@nut-tree-fork/nut-js": "4.2.6"
     },
     "devDependencies": {
@@ -32,5 +32,8 @@
         "nodemon": "3.1.9",
         "@types/node": "22.10.2"
     },
-    "resolutions": {}
+    "resolutions": {
+        "hono": "4.11.7",
+        "**/hono": "4.11.7"
+    }
 }

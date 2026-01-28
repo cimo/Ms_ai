@@ -19,4 +19,4 @@ then
     sleep 3
 fi
 
-node ${PATH_ROOT}script/chrome.js "${2}"
+node ${PATH_ROOT}script/chrome.js "${2}" >/dev/null 2>&1 &
