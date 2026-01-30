@@ -1,5 +1,5 @@
 {
-    "typescript.tsdk": "mcp_server/node_modules/typescript/lib",
+    "typescript.tsdk": "node_modules/typescript/lib",
     "l13Diff.exclude": [
         ".git",
         ".cache",
