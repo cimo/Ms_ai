@@ -1,20 +1,19 @@
 #!/bin/bash
 
-countDisplay=98
+countDisplay=${1}
 
 eval "$(dbus-launch --auto-syntax)"
 
-if [ "${1:-}" = "headless" ]
+if [ "${3:-}" = "headless" ]
 then
-    pkill -f "Xvfb" || true
-    pkill -f "X :${countDisplay}" || true
+    rm -f /tmp/.X11-unix/X${countDisplay} || true;
+    rm -f /tmp/.X${countDisplay}-lock || true;
 
-    rm -f /tmp/.X11-unix/X${countDisplay}
-    rm -f /tmp/.X${countDisplay}-lock
-        
-    Xvfb :${countDisplay} -screen 0 1920x1080x24 >/dev/null 2>&1 &
-    
+    kill -9 $(ps -ef | grep "Xvfb :${countDisplay}" | grep -v grep | awk '{print $2}')
+
     export DISPLAY=:${countDisplay}
+
+    Xvfb :${countDisplay} -screen 0 1920x1080x24 >> ${PATH_ROOT}${MS_AI_PATH_LOG}xvfb.log 2>&1 &
 
     sleep 3
 fi

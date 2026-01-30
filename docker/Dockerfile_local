@@ -28,9 +28,10 @@ COPY ./docker/NotoSansJP-Regular.ttf /usr/share/fonts/truetype/noto/
 RUN cd ~ \
     # No root
     && useradd -U node -d ${PATH_ROOT} -s /bin/bash \
-    && mkdir -p ${PATH_ROOT} \
+    && mkdir -p ${PATH_ROOT} /tmp/.X11-unix/ \
     && chown -R node:node ${PATH_ROOT} \
     && chmod -R 775 ${PATH_ROOT} \
+    && chmod -R 1777 /tmp/.X11-unix/ \
     # Update
     && VERSION_CODENAME=$(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) \
     && chmod -R 0644 /usr/local/share/ca-certificates/ \
@@ -39,7 +40,7 @@ RUN cd ~ \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone \
     && echo "application/typescript ts" >> /etc/mime.types \
     # NodeJs
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get update && apt-get install -y \
     nodejs \
     # Dbus

@@ -16,6 +16,9 @@ const execute = async () => {
         "--hide-crash-restore-bubble",
         "--window-position=0,0",
         "--window-size=1920,1080",
+        "--enable-logging",
+        "--v=1",
+        "--log-file=/home/app/log/chrome.log",
     ];
 
     const flagRdpList = [
