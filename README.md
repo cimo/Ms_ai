@@ -11,9 +11,17 @@ It's possible to use a personal certificate instead of "Ms_cronjob", just add th
 -   X11 for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
 -   LM studio
 
-## Secret
+## Microsoft
 
-1. Create a file "local.env.secret" in "env" folder and put there all your secret before build the container.
+1. Create a file "microsoft.env" in "env" folder and insert:
+```
+MS_AI_AD_URL_LOGIN=''
+MS_AI_AD_URL_REDIRECT=''
+MS_AI_AD_SCOPE=''
+MS_AI_AD_TENANT=''
+MS_AI_AD_CLIENT=''
+MS_AI_AD_CLIENT_SECRET=''
+```
 
 ## Installation
 

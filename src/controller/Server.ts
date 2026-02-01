@@ -104,7 +104,7 @@ export default class Server {
             const controllerLmStudio = new ControllerLmStudio(this.app, this.limiter);
             controllerLmStudio.api();
 
-            const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject, controllerLmStudio);
+            const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
             controllerMicrosoft.api();
 
             helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
