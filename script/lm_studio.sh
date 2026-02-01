@@ -5,46 +5,67 @@ urlOpenAiHost="${urlOpenAi%%:*}"
 urlOpenAiPort="${urlOpenAi##*:}"
 
 pathLmStudio="/home/squashfs-root/lm-studio"
-pathLms="/home/app/.lmstudio/bin/lms"
+pathLms="${PATH_ROOT}.lmstudio/bin/lms"
 
-countDisplay=99
+sourcePath=""
+targetPath="${PATH_ROOT}.cuda/"
 
-eval "$(dbus-launch --auto-syntax)"
-
-if [ "${1:-}" = "headless" ]
+if [ "${1}" = "gui" ]
 then
-    rm -f /tmp/.X11-unix/X${countDisplay} || true;
-    rm -f /tmp/.X${countDisplay}-lock || true;
+    mainPid=$(ps -eo pid,cmd | grep '[l]m-studio --enable-features' | awk '{print $1}')
 
-    kill -9 $(ps -ef | grep "Xvfb :${countDisplay}" | grep -v grep | awk '{print $2}')
+    kill -9 ${mainPid}
 
-    export DISPLAY=:${countDisplay}
-
-    Xvfb :${countDisplay} -screen 0 1920x1080x24 >> ${PATH_ROOT}${MS_AI_PATH_LOG}xvfb.log 2>&1 &
-
-    sleep 3
+    "${pathLmStudio}" --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
+else
+    curl -fsSL https://lmstudio.ai/install.sh | bash
 fi
 
-"${pathLmStudio}" --no-sandbox --shm-size=2g --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
-
-if [ -x "${pathLms}" ]
-then
+while [ ! -f "${pathLms}" ]
+do
     sleep 3
+done
 
-    "${pathLms}" server start --bind ${urlOpenAiHost} --port ${urlOpenAiPort}
+"${pathLms}" server start --bind ${urlOpenAiHost} --port ${urlOpenAiPort}
 
-    sleep 3
+read -r -a modelList <<< "$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ',' ' ')"
 
-    read -r -a modelList <<< "$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ',' ' ')"
+for model in "${modelList[@]}"
+do
+    echo "Model: ${model}"
 
-    for model in ${modelList[@]}
+    modelIdentifier=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||' | tr '[:upper:]' '[:lower:]')
+
+    download=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download -H "Content-Type: application/json" -d "{\"model\": \"https://huggingface.co/${model}\", \"quantization\": \"Q8_0\"}")
+
+    jobId=$(echo ${download} | jq -r '.job_id')
+
+    echo "Job ID: ${jobId}"
+
+    if [ "${jobId}" != "null" ]
+    then
+        status="start"
+
+        while [ "${status}" != "completed" ]
+        do
+            sleep 3
+
+            status=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download/status/${jobId} | jq -r '.status')
+
+            echo "Status: ${status}"
+        done
+    fi
+
+    modelIdentifierFolder=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||')
+
+    while [ ! -f "/home/app/.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf" ]
     do
         sleep 3
-
-        "${pathLms}" get "${model}@q8_0" --yes
-
-        sleep 3
-
-        "${pathLms}" load "${model}"
     done
-fi
+
+    sleep 3
+
+    curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
+
+    echo ""
+done

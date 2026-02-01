@@ -8,7 +8,7 @@ It's possible to use a personal certificate instead of "Ms_cronjob", just add th
 ## Info:
 
 -   Cross platform (Windows, Linux)
--   X11 for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
+-   WSLg for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
 -   LM studio
 
 ## Microsoft
@@ -45,11 +45,9 @@ bash docker/container_execute.sh "local" "up" "xxx"
 
 ## GPU
 
-1. When the container startup are present 3 message that indicate your GPU status:
+1. When the container startup is present a message that indicate your GPU status:
 
 NVIDIA GeForce RTX 3060 - (Host GPU available)
-Host without vulkan support. - (No library vulkan available for your GPU)
-OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CPU)
 
 ## Reset
 
@@ -57,7 +55,6 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
 
     - .cache
     - .config
-    - .dbus
     - .lmstudio
     - .local
     - .npm
@@ -73,11 +70,11 @@ OpenGL renderer string: llvmpipe (LLVM 15.0.7, 256 bits) - (OpenGL emulate on CP
 3. For execute "LM studio" GUI write on terminal:
 
     ```
-    bash script/lm_studio.sh
+    bash script/lm_studio.sh "gui"
     ```
 
 4. For execute "Chrome" GUI write on terminal:
 
     ```
-    bash script/chrome.sh
+    bash script/chrome.sh "gui"
     ```

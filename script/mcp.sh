@@ -1,13 +1,16 @@
 #!/bin/bash
 
-if [ "${1:-}" = "node" ]
+cd "${PATH_ROOT}mcp_server/"
+    
+rm -rf "${PATH_ROOT}node_modules/" "${PATH_ROOT}package-lock.json"
+    
+npm install
+
+if [ "${1}" = "local" ]
 then
-    node ${PATH_ROOT}mcp_server/dist/src/Main.js
+    npm run execute >> "${PATH_ROOT}${MS_AI_PATH_LOG}mcp.log" 2>&1 &
 else
-    cd ${PATH_ROOT}mcp_server/
+    npm run build
     
-    rm -rf ${PATH_ROOT}node_modules/ ${PATH_ROOT}package-lock.json
-    
-    npm install
-    npm run execute >> ${PATH_ROOT}${MS_AI_PATH_LOG}mcp.log 2>&1 &
+    node "${PATH_ROOT}mcp_server/dist/src/Main.js" >> "${PATH_ROOT}${MS_AI_PATH_LOG}mcp.log" 2>&1 &
 fi

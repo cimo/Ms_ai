@@ -23,6 +23,7 @@ pnpm-debug.log*
 # cimo +
 .cache
 .config
+.cuda
 .dbus
 .lmstudio
 .local

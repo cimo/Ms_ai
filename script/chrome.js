@@ -7,10 +7,11 @@ const urlPage = argumentList[0];
 
 const execute = async () => {
     const flagBaseList = [
+        "--enable-features=UseOzonePlatform",
+        "--ozone-platform=wayland",
+        "--disable-features=WaylandWindowDecorations",
         "--no-sandbox",
-        "--shm-size=2g",
         "--disable-dev-shm-usage",
-        "--disable-gpu",
         "--no-first-run",
         "--no-default-browser-check",
         "--hide-crash-restore-bubble",
