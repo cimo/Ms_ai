@@ -34,7 +34,7 @@ pnpm-debug.log*
 .pki
 .lmstudio-home-pointer
 dist
-env/local.env.secret
+env/microsoft.env
 log/*
 !log/.gitkeep
 mcp_server/src/tool/*
