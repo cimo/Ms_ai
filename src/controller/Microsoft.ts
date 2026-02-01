@@ -58,22 +58,26 @@ export default class Microsoft {
     }
 
     loginWithAuthenticationCode = async (): Promise<string> => {
-        const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
+        let result = "";
 
-        const parameterObject: AuthorizationUrlRequest = {
-            scopes: JSON.parse(AD_SCOPE),
-            redirectUri: AD_URL_REDIRECT,
-            state: codeVerifier,
-            codeChallenge,
-            codeChallengeMethod: "S256",
-            claims: this.claimsJsonObject
-        };
+        if (AD_TENANT && AD_CLIENT && AD_CLIENT_SECRET) {
+            const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
 
-        const cca = new ConfidentialClientApplication(this.configurationObject);
+            const parameterObject: AuthorizationUrlRequest = {
+                scopes: JSON.parse(AD_SCOPE),
+                redirectUri: AD_URL_REDIRECT,
+                state: codeVerifier,
+                codeChallenge,
+                codeChallengeMethod: "S256",
+                claims: this.claimsJsonObject
+            };
 
-        const authenticationUrl = await cca.getAuthCodeUrl(parameterObject);
+            const cca = new ConfidentialClientApplication(this.configurationObject);
 
-        return authenticationUrl;
+            result = await cca.getAuthCodeUrl(parameterObject);
+        }
+
+        return result;
     };
 
     codeToToken = async (code: string, state: string): Promise<Record<string, string>> => {

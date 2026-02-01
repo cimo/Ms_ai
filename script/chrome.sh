@@ -1,21 +1,19 @@
 #!/bin/bash
 
-countDisplay=${1}
-
-eval "$(dbus-launch --auto-syntax)"
-
-if [ "${3:-}" = "headless" ]
+if [ "${1}" = "gui" ]
 then
-    rm -f /tmp/.X11-unix/X${countDisplay} || true;
-    rm -f /tmp/.X${countDisplay}-lock || true;
+    google-chrome --enable-features=UseOzonePlatform --ozone-platform=wayland --disable-features=WaylandWindowDecorations --no-sandbox --disable-dev-shm-usage --no-first-run --no-default-browser-check --hide-crash-restore-bubble >> "${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log" 2>&1 &
+else
+    export DISPLAY=:${2}
 
-    kill -9 $(ps -ef | grep "Xvfb :${countDisplay}" | grep -v grep | awk '{print $2}')
+    rm -f "/tmp/.X11-unix/X${2}" || true;
+    rm -f "/tmp/.X${2}-lock" || true;
 
-    export DISPLAY=:${countDisplay}
+    kill -9 $(ps -ef | grep "Xvfb :${2}" | grep -v grep | awk '{print $2}')
 
-    Xvfb :${countDisplay} -screen 0 1920x1080x24 >> ${PATH_ROOT}${MS_AI_PATH_LOG}xvfb.log 2>&1 &
+    Xvfb :${2} -screen 0 1920x1080x24 >> "${PATH_ROOT}${MS_AI_PATH_LOG}xvfb.log" 2>&1 &
 
     sleep 3
-fi
 
-node ${PATH_ROOT}script/chrome.js "${2}" >/dev/null 2>&1 &
+    node "${PATH_ROOT}script/chrome.js" "${3}" >/dev/null 2>&1 &
+fi

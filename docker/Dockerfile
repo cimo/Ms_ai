@@ -20,12 +20,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NOWARNINGS=yes
 ENV SUDO_FORCE_REMOVE=yes
 ENV NODE_OPTIONS=--use-openssl-ca
+ENV WAYLAND_DISPLAY=wayland-0
+ENV XDG_SESSION_TYPE=wayland
+ENV XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+ENV ELECTRON_ENABLE_WAYLAND=1
+ENV ELECTRON_OZONE_PLATFORM_HINT=auto
+ENV OZONE_PLATFORM=wayland
+ENV EGL_PLATFORM=wayland
+ENV ANGLE_DEFAULT_PLATFORM=egl
+ENV DBUS_SESSION_BUS_ADDRESS=unix:path=/mnt/wslg/runtime-dir/bus
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
-ENV VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
 
 COPY ./.ms_cronjob-volume/certificate/* /usr/local/share/ca-certificates/
 COPY ./docker/NotoSansJP-Regular.ttf /usr/share/fonts/truetype/noto/
+COPY ./docker/NotoSansSymbols2-Regular.ttf /usr/share/fonts/truetype/noto/
+COPY ./docker/NotoColorEmoji-Regular.ttf /usr/share/fonts/truetype/noto/
+COPY ./docker/font.local.conf /etc/fonts/local.conf
 COPY ./ ${PATH_ROOT}
 
 RUN cd ~ \
@@ -37,7 +48,7 @@ RUN cd ~ \
     # Update
     && VERSION_CODENAME=$(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) \
     && chmod -R 0644 /usr/local/share/ca-certificates/ \
-    && apt-get update && apt-get install -y ca-certificates tzdata curl media-types \
+    && apt-get update && apt-get install -y ca-certificates tzdata curl media-types jq \
     && update-ca-certificates \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone \
     && echo "application/typescript ts" >> /etc/mime.types \
@@ -45,36 +56,28 @@ RUN cd ~ \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get update && apt-get install -y \
     nodejs \
-    # Dbus
-    && apt-get update && apt-get install -y \
-    dbus \
-    dbus-x11 \
     # GPU
     && apt-get update && apt-get install -y \
     libglib2.0-0 \
     libgtk-3-0 \
+    libcairo2 \
+    libfontconfig1 \
+    libfreetype6 \
     libnss3 \
     libnspr4 \
-    libx11-6 \
-    libxext6 \
-    libxrender1 \
-    libxrandr2 \
-    libfreetype6 \
-    libfontconfig1 \
     libasound2 \
-    libgomp1 \
     libgbm1 \
-    libglu1-mesa \
-    libvulkan1 \
-    mesa-vulkan-drivers \
-    mesa-utils \
+    libegl1 \
+    libegl1-mesa \
+    libgl1-mesa-dri \
+    libdrm2 \
+    libwayland-client0 \
+    libwayland-egl1 \
+    libwayland-cursor0 \
+    libgomp1 \
     xdg-utils \
-    libxcb1 \
-    libx11-xcb1 \
-    libcairo2 \
     # LM studio
     && apt-get update && apt-get install -y \
-    xvfb \
     && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
     && cd /home/ \
     && chmod +x "/home/lm_studio.AppImage" \
@@ -85,6 +88,9 @@ RUN cd ~ \
     && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /home/chrome.deb \
     && apt-get update && apt-get install -y /home/chrome.deb \
     && rm /home/chrome.deb \
+    # Xvfb
+    && apt-get update && apt-get install -y \
+    xvfb \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
@@ -102,13 +108,13 @@ RUN rm -rf ${PATH_ROOT}node_modules/ ${PATH_ROOT}package-lock.json \
     && npm run build
 
 # Command
-CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU." \
-    && command -v vulkaninfo > /dev/null && vulkaninfo | grep "deviceName" || echo "Host without vulkan support." \
-    && command -v glxinfo > /dev/null && glxinfo | grep "OpenGL renderer string" || echo "Host without opengl support." \
+CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU support." \
+    # Dbus
+    && dbus-daemon --session --address=unix:path=/mnt/wslg/runtime-dir/bus --fork \
     # LM studio
-    && bash ${PATH_ROOT}script/lm_studio.sh "headless" \
+    && bash ${PATH_ROOT}script/lm_studio.sh \
     # Mcp
-    && bash ${PATH_ROOT}script/mcp.sh "node" \
+    && bash ${PATH_ROOT}script/mcp.sh \
     # Node
     && node ${PATH_ROOT}dist/src/controller/Server.js
 
