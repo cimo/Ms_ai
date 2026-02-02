@@ -2,12 +2,7 @@
 
 if [ "${1}" = "gui" ]
 then
-    if pgrep -x chrome >/dev/null 2>&1
-    then
-        pkill -x chrome
-    fi
-
-    XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir" google-chrome --enable-features=UseOzonePlatform --ozone-platform=wayland --disable-features=WaylandWindowDecorations --no-sandbox --disable-dev-shm-usage --no-first-run --no-default-browser-check --hide-crash-restore-bubble >> "${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log" 2>&1 &
+    XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir" google-chrome --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --no-first-run --no-default-browser-check --hide-crash-restore-bubble >> "${PATH_ROOT}${MS_AI_PATH_LOG}chrome.log" 2>&1 &
 else
     #export DISPLAY=:${2}
 

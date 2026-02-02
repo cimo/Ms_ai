@@ -30,7 +30,7 @@ export const number = (sessionId: string): number => {
 
     displayObject[sessionId] = result;
 
-    process.env["DISPLAY"] = `:${result}`;
+    //process.env["DISPLAY"] = `:${result}`;
 
     return result;
 };
