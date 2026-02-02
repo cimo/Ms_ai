@@ -43,11 +43,14 @@ mcp_server/src/tool/controller/*
 mcp_server/src/tool/model/*
 !mcp_server/src/tool/controller/
 !mcp_server/src/tool/controller/.gitkeep
+!mcp_server/src/tool/controller/Automate/
 !mcp_server/src/tool/controller/Math/
 !mcp_server/src/tool/model/
 !mcp_server/src/tool/model/.gitkeep
+!mcp_server/src/tool/model/Automate.ts
 !mcp_server/src/tool/model/Math.ts
-!mcp_server/src/tool/.gitattributes
 !mcp_server/src/tool/.gitkeep
+!mcp_server/src/tool/Automate.ts
+!mcp_server/src/tool/Math.ts
 node_modules
 package-lock.json
