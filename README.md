@@ -45,7 +45,7 @@ bash docker/container_execute.sh "local" "up" "xxx"
 
 ## GPU
 
-1. When the container startup is present a message that indicate your GPU status:
+1. When the container start, a message appears that indicates the GPU status:
 
 NVIDIA GeForce RTX 3060 - (Host GPU available)
 

@@ -6,24 +6,34 @@ urlOpenAiPort="${urlOpenAi##*:}"
 
 pathLmStudio="/home/squashfs-root/lm-studio"
 pathLms="${PATH_ROOT}.lmstudio/bin/lms"
-
-sourcePath=""
-targetPath="${PATH_ROOT}.cuda/"
+pathBackend="${PATH_ROOT}.lmstudio/extensions/backends/"
+pathBackendVendor="${PATH_ROOT}.lmstudio/extensions/backends/vendor/"
 
 if [ "${1}" = "gui" ]
 then
-    mainPid=$(ps -eo pid,cmd | grep '[l]m-studio --enable-features' | awk '{print $1}')
+    pkill -f "${pathLmStudio}"
+    pkill -f "${pathLms}"
 
-    kill -9 ${mainPid}
-
-    "${pathLmStudio}" --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage >> ${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log 2>&1 &
+    XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir" "${pathLmStudio}" --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage  >> "${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log" 2>&1 &
 else
     curl -fsSL https://lmstudio.ai/install.sh | bash
 fi
 
-while [ ! -f "${pathLms}" ]
+while true
 do
     sleep 3
+
+    if [[ -d "${pathBackend}llama.cpp-linux-x86_64-avx2-2.0.1/" \
+    && -d "${pathBackend}llama.cpp-linux-x86_64-nvidia-cuda-avx2-2.0.1/" \
+    && -d "${pathBackend}llama.cpp-linux-x86_64-vulkan-avx2-2.0.1/" ]]
+    then
+        if [[ -d "${pathBackendVendor}_amphibian/" \
+        && -d "${pathBackendVendor}linux-llama-cuda-vendor-v1/" \
+        && -d "${pathBackendVendor}linux-llama-vulkan-vendor-v1/" ]]
+        then
+            break
+        fi
+    fi
 done
 
 "${pathLms}" server start --bind ${urlOpenAiHost} --port ${urlOpenAiPort}
@@ -34,15 +44,13 @@ for model in "${modelList[@]}"
 do
     echo "Model: ${model}"
 
-    modelIdentifier=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||' | tr '[:upper:]' '[:lower:]')
-
     download=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download -H "Content-Type: application/json" -d "{\"model\": \"https://huggingface.co/${model}\", \"quantization\": \"Q8_0\"}")
 
     jobId=$(echo ${download} | jq -r '.job_id')
 
     echo "Job ID: ${jobId}"
 
-    if [ "${jobId}" != "null" ]
+    if [ -n "${jobId}" ] && [ "${jobId}" != "null" ]
     then
         status="start"
 
@@ -53,19 +61,38 @@ do
             status=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download/status/${jobId} | jq -r '.status')
 
             echo "Status: ${status}"
+
+            if [ -z "${status}" ] || [ "${status}" = "null" ]
+            then
+                break
+            fi
         done
     fi
 
     modelIdentifierFolder=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||')
 
-    while [ ! -f "/home/app/.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf" ]
+    echo "Model folder: ${modelIdentifierFolder}"
+
+    pathModel="/home/app/.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf"
+
+    while [ ! -f "${pathModel}" ]
     do
         sleep 3
+
+        if [ -z "${jobId}" ] || [ "${jobId}" = "null" ]
+        then
+            break
+        fi
     done
 
-    sleep 3
+    if [ -f "${pathModel}" ]
+    then
+        sleep 3
+        
+        modelIdentifier=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||' | tr '[:upper:]' '[:lower:]')
+        
+        curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
 
-    curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
-
-    echo ""
+        echo ""
+    fi
 done
