@@ -20,13 +20,12 @@ ENV SUDO_FORCE_REMOVE=yes
 ENV NODE_OPTIONS=--use-openssl-ca
 ENV WAYLAND_DISPLAY=wayland-0
 ENV XDG_SESSION_TYPE=wayland
-ENV XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
 ENV ELECTRON_ENABLE_WAYLAND=1
 ENV ELECTRON_OZONE_PLATFORM_HINT=auto
 ENV OZONE_PLATFORM=wayland
 ENV EGL_PLATFORM=wayland
 ENV ANGLE_DEFAULT_PLATFORM=egl
-ENV DBUS_SESSION_BUS_ADDRESS=unix:path=/mnt/wslg/runtime-dir/bus
+ENV PULSE_SERVER=unix:/mnt/wslg/PulseServer
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
@@ -39,9 +38,11 @@ COPY ./docker/font.local.conf /etc/fonts/local.conf
 RUN cd ~ \
     # No root
     && useradd -U node -d ${PATH_ROOT} -s /bin/bash \
-    && mkdir -p ${PATH_ROOT} \
-    && chown -R node:node ${PATH_ROOT} \
+    && uid="$(id -u node)" \
+    && mkdir -p ${PATH_ROOT} "/run/user/${uid}" \
+    && chown -R node:node ${PATH_ROOT} "/run/user/${uid}" \
     && chmod -R 775 ${PATH_ROOT} \
+    && chmod -R 700 "/run/user/${uid}" \
     # Update
     && VERSION_CODENAME=$(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) \
     && chmod -R 0644 /usr/local/share/ca-certificates/ \
@@ -53,7 +54,7 @@ RUN cd ~ \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get update && apt-get install -y \
     nodejs \
-    # GPU
+    # Wslg
     && apt-get update && apt-get install -y \
     libglib2.0-0 \
     libgtk-3-0 \
@@ -99,10 +100,11 @@ USER node
 
 WORKDIR ${PATH_ROOT}
 
-# Command
-CMD command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU support." \
+CMD \
+    # Command
+    command -v nvidia-smi > /dev/null && nvidia-smi --query-gpu=name --format=csv,noheader || echo "Host without nvidia GPU support." \
     # Dbus
-    && dbus-daemon --session --address=unix:path=/mnt/wslg/runtime-dir/bus --fork \
+    && bash ${PATH_ROOT}script/dbus.sh \
     # LM studio
     && bash ${PATH_ROOT}script/lm_studio.sh "gui" \
     # Mcp
