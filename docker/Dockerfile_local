@@ -91,6 +91,7 @@ RUN cd ~ \
     # Xvfb
     && apt-get update && apt-get install -y \
     xvfb \
+    libxtst-dev \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
