@@ -1,6 +1,7 @@
-import { exec, execFile } from "child_process";
+import { exec } from "child_process";
 import { mouse, screen, FileType } from "@nut-tree-fork/nut-js";
 import sharp from "sharp";
+import { spawn } from "child_process";
 
 // Source
 import * as Helper from "./Helper.js";
@@ -30,23 +31,38 @@ export const number = (sessionId: string): number => {
 
     displayObject[sessionId] = result;
 
-    //process.env["DISPLAY"] = `:${result}`;
-
     return result;
 };
 
 export const start = async (display: number): Promise<void> => {
-    const execCommand = `. ${Helper.PATH_ROOT}script/chrome.sh`;
-    const execArgumentList = [`"${display}"`, `"${Helper.CHROME_URL}"`, `"headless"`];
+    //const xvfb = `xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" --error-file="${Helper.PATH_ROOT}${Helper.PATH_LOG}xvfb.log"`;
+    //const chrome = `node "${Helper.PATH_ROOT}script/chrome.js" "${display}" ""`;
 
-    execFile(execCommand, execArgumentList, { shell: "/bin/bash", encoding: "utf8" }, () => {});
+    //stop(display);
+
+    spawn("Xvfb", [`:${display}`, "-screen", "0", "1920x1080x24"], {
+        stdio: "inherit",
+        shell: false
+    });
+
+    setTimeout(() => {
+        const env = { ...process.env, DISPLAY: `:${display}`, XDG_SESSION_TYPE: "x11" };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (env as any).WAYLAND_DISPLAY;
+
+        spawn("node", [`${Helper.PATH_ROOT}script/chrome.js`, "1", ""], {
+            env,
+            stdio: "inherit",
+            shell: false
+        });
+    }, 5000);
 };
 
 export const stop = async (display: number): Promise<string> => {
-    exec(`rm -f /tmp/.X11-unix/X${display} || true`);
-    exec(`rm -f /tmp/.X${display}-lock || true`);
+    exec(`rm -f /tmp/.X${display}-lock`);
+    exec(`rm -f /tmp/.X11-unix/X${display}`);
 
-    exec(`kill -9 $(ps -ef | grep "Xvfb :${display}" | grep -v grep | awk '{print $2}')`);
+    exec(`pkill -f "Xvfb :${display}"`);
 
     return "ok";
 };
@@ -54,7 +70,9 @@ export const stop = async (display: number): Promise<string> => {
 export const screenshot = async (): Promise<Buffer> => {
     if (Helper.IS_DEBUG) {
         const mousePosition = await mouse.getPosition();
+
         await screen.capture("screenshot", FileType.JPG, `${Helper.PATH_ROOT}${Helper.PATH_FILE}`);
+
         await drawCursor(`${Helper.PATH_ROOT}${Helper.PATH_FILE}screenshot.jpg`, mousePosition.x, mousePosition.y);
     }
 

@@ -76,5 +76,5 @@ NVIDIA GeForce RTX 3060 - (Host GPU available)
 4. For execute "Chrome" GUI write on terminal:
 
     ```
-    bash script/chrome.sh "gui"
+    bash script/chrome.sh
     ```

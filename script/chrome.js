@@ -3,13 +3,12 @@ import { launch } from "chrome-launcher";
 const argumentList = process.argv.slice(2);
 
 const pathExtension = "/home/app/docker/ce_microsoft_sso";
-const urlPage = argumentList[0];
+const displayNumber = argumentList[0]
+const urlPage = argumentList[1];
 
 const execute = async () => {
     const flagBaseList = [
-        "--enable-features=UseOzonePlatform",
-        "--ozone-platform=wayland",
-        "--disable-features=WaylandWindowDecorations",
+        "--ozone-platform=x11",
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--no-first-run",
@@ -27,11 +26,18 @@ const execute = async () => {
         "--enable-unsafe-extension-debugging",
     ];
 
+    const environmentList = {
+        ...process.env,
+        DISPLAY: `:${displayNumber}`,
+        XDG_SESSION_TYPE: "x11",
+    };
+
     const chrome = await launch({
         chromeFlags: [...flagBaseList, ...flagRdpList],
         startingUrl: urlPage,
         chromePath: "/usr/bin/google-chrome",
         ignoreDefaultFlags: true,
+        envVars: environmentList
     });
 
     const remotePipe = chrome.remoteDebuggingPipes;
