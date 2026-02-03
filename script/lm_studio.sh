@@ -14,7 +14,7 @@ then
     pkill -f "${pathLmStudio}"
     pkill -f "${pathLms}"
 
-    XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir" "${pathLmStudio}" --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage  >> "${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log" 2>&1 &
+    "${pathLmStudio}" --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage  >> "${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log" 2>&1 &
 else
     curl -fsSL https://lmstudio.ai/install.sh | bash
 fi
