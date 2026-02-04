@@ -1,6 +1,5 @@
-import { stdout } from "process";
 import { mouse, screen, FileType } from "@nut-tree-fork/nut-js";
-import sharp from "sharp";
+import sharp, { Channels } from "sharp";
 
 // Source
 import * as Helper from "./Helper.js";
@@ -13,7 +12,7 @@ const drawCursor = async (file: string, x: number, y: number): Promise<void> => 
         .toFile(file.replace(".jpg", "_cursor.jpg"));
 };
 
-const screenshot = async (): Promise<Buffer> => {
+const screenshot = async (): Promise<string> => {
     if (Helper.IS_DEBUG) {
         const mousePosition = await mouse.getPosition();
 
@@ -23,31 +22,28 @@ const screenshot = async (): Promise<Buffer> => {
     }
 
     const imagePixel = await screen.grab();
-    const rgbImage = await imagePixel.toRGB();
+    const imageRbg = await imagePixel.toRGB();
 
-    const bufferJpg = await sharp(rgbImage.data, {
+    const imageBuffer = await sharp(imageRbg.data, {
         raw: {
-            width: imagePixel.width,
-            height: imagePixel.height,
-            channels: 4
+            width: imageRbg.width,
+            height: imageRbg.height,
+            channels: imageRbg.channels as Channels
         }
     })
         .jpeg()
+        .removeAlpha()
         .toBuffer();
 
-    return bufferJpg;
+    return imageBuffer.toString("base64");
 };
 
 const argumentList = process.argv.slice(2);
 
-let result: Buffer = Buffer.from("");
+let result = "";
 
 if (argumentList[0] === "screenshot") {
     result = await screenshot();
 }
 
-const base64 = result.toString("base64");
-
-if (!stdout.write(base64)) {
-    await new Promise<void>((resolve) => stdout.once("drain", resolve));
-}
+process.stdout.write(result);

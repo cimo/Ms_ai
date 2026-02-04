@@ -5,3 +5,4 @@ export const PATH_FILE = process.env["MS_AI_PATH_FILE"];
 export const PATH_LOG = process.env["MS_AI_PATH_LOG"];
 
 export const CHROME_URL = ENV_NAME === "local" ? "https://doclift-jp-l.apps.kpmgservicesqa.tech/login" : "";
+export const TOOL_PATH_AUTOMATE = "mcp_server/src/tool/controller/Automate/";

@@ -1,14 +1,18 @@
-//import { exec } from "child_process";
+import { exec } from "child_process";
 import { z } from "zod";
 import type { Context } from "fastmcp";
 
 // Source
-//import * as helperAutomate from "./controller/Automate/Helper.js";
+import * as helper from "./controller/Automate/Helper.js";
 import * as model from "./model/Automate.js";
-//import * as ocr from "./controller/Automate/Ocr.js";
+import * as ocr from "./controller/Automate/Ocr.js";
 
 const ocrParameter = z.object({
     searchText: z.string().optional().describe("searchText (string) : Optional, exact phrase to find in recognized text.")
+});
+
+const browserParameter = z.object({
+    url: z.string().describe("url (string) : URL to open in the browser.")
 });
 
 const mouseMoveParameter = z.object({
@@ -52,20 +56,49 @@ export const toolAutomateOcr = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            /*const displayNumber = await display.number(context.sessionId);
-
-            await display.start(displayNumber);
-
-            const file = await display.screenshot();
+            const image = await new Promise<string>((resolve) => {
+                exec(`DISPLAY=:1 npx tsx ${helper.PATH_ROOT}${helper.TOOL_PATH_AUTOMATE}Display.ts "screenshot"`, (_, stdout) => {
+                    resolve(stdout);
+                });
+            });
 
             await ocr.login(context.sessionId);
-            resultList = await ocr.extract(context.sessionId, file, argument.searchText, "data");
-            ocr.logout(context.sessionId);*/
+            resultList = await ocr.extract(context.sessionId, image, argument.searchText, "data");
+            await ocr.logout(context.sessionId);
         }
 
         await reportProgress({ progress: 100, total: 100 });
 
         return JSON.stringify(resultList, null, 2);
+    }
+};
+
+export const toolAutomateBrowser = {
+    name: "tool_automate_browser",
+    description:
+        "Open the browser application:\n" +
+        "Input:\n" +
+        "- url (string) : URL to open in the browser.\n" +
+        "Output:\n" +
+        "- A string with the text 'ok'",
+    parameters: browserParameter,
+    execute: async (argument: z.infer<typeof browserParameter>, context: Context<Record<string, unknown>>) => {
+        let result = "";
+
+        const { reportProgress } = context;
+        await reportProgress({ progress: 0, total: 100 });
+
+        if (context.sessionId) {
+            result = await new Promise<string>((resolve) => {
+                exec(`npx tsx "${helper.PATH_ROOT}mcp_server/src/Chrome.ts" "1" "${argument.url}"`);
+
+                resolve("ok");
+            });
+        }
+
+        await reportProgress({ progress: 100, total: 100 });
+
+        return String(result);
     }
 };
 
@@ -86,7 +119,14 @@ export const toolAutomateMouseMove = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            //result = await mouse.move(argument.x, argument.y);
+            result = await new Promise<string>((resolve) => {
+                exec(
+                    `DISPLAY=:1 npx tsx ${helper.PATH_ROOT}${helper.TOOL_PATH_AUTOMATE}Mouse.ts "move" "${argument.x}" "${argument.y}"`,
+                    (_, stdout) => {
+                        resolve(stdout);
+                    }
+                );
+            });
         }
 
         await reportProgress({ progress: 100, total: 100 });
@@ -114,8 +154,13 @@ export const toolAutomateMouseClick = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            //const button = (argument.button ?? 0) as 0 | 1 | 2;
-            //result = await mouse.click(button);
+            const button = (argument.button ?? 0) as 0 | 1 | 2;
+
+            result = await new Promise<string>((resolve) => {
+                exec(`DISPLAY=:1 npx tsx ${helper.PATH_ROOT}${helper.TOOL_PATH_AUTOMATE}Mouse.ts "click" "${button}"`, (_, stdout) => {
+                    resolve(stdout);
+                });
+            });
         }
 
         await reportProgress({ progress: 100, total: 100 });

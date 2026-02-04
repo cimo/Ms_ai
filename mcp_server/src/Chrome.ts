@@ -1,13 +1,13 @@
 import { launch } from "chrome-launcher";
 
-const argumentList = process.argv.slice(2);
+const argumentList: string[] = process.argv.slice(2);
 
-const pathExtension = "/home/app/docker/ce_microsoft_sso";
-const displayNumber = argumentList[0]
-const urlPage = argumentList[1];
+const pathExtension: string = "/home/app/docker/ce_microsoft_sso";
+const displayNumber: string = argumentList[0];
+const urlPage: string = argumentList[1];
 
-const execute = async () => {
-    const flagBaseList = [
+const execute = async (): Promise<void> => {
+    const flagBaseList: string[] = [
         "--ozone-platform=x11",
         "--no-sandbox",
         "--disable-dev-shm-usage",
@@ -15,21 +15,15 @@ const execute = async () => {
         "--no-default-browser-check",
         "--hide-crash-restore-bubble",
         "--window-position=0,0",
-        "--window-size=1920,1080",
-        "--enable-logging",
-        "--v=1",
-        "--log-file=/home/app/log/chrome.log",
+        "--window-size=1920,1080"
     ];
 
-    const flagRdpList = [
-        "--remote-debugging-pipe",
-        "--enable-unsafe-extension-debugging",
-    ];
+    const flagRdpList: string[] = ["--remote-debugging-pipe", "--enable-unsafe-extension-debugging"];
 
-    const environmentList = {
+    const environmentList: NodeJS.ProcessEnv = {
         ...process.env,
         DISPLAY: `:${displayNumber}`,
-        XDG_SESSION_TYPE: "x11",
+        XDG_SESSION_TYPE: "x11"
     };
 
     const chrome = await launch({
@@ -49,7 +43,7 @@ const execute = async () => {
     const request = {
         id: 1234,
         method: "Extensions.loadUnpacked",
-        params: { path: pathExtension },
+        params: { path: pathExtension }
     };
 
     remotePipe.outgoing.write(`${JSON.stringify(request)}\x00`);
@@ -59,16 +53,10 @@ const execute = async () => {
 
         remotePipe.incoming.on("error", reject);
 
-        remotePipe.incoming.on("close", () =>
-            reject(
-                new Error(
-                    "Error: remoteDebuggingPipes closed before a response was received.",
-                ),
-            ),
-        );
+        remotePipe.incoming.on("close", () => reject(new Error("Error: remoteDebuggingPipes closed before a response was received.")));
 
-        remotePipe.incoming.on("data", (chunk) => {
-            pending += chunk;
+        remotePipe.incoming.on("data", (chunk: Buffer) => {
+            pending += chunk.toString();
 
             let end = pending.indexOf("\x00");
 
@@ -89,7 +77,8 @@ const execute = async () => {
     });
 };
 
-execute().catch((error) => {
+execute().catch((error: unknown) => {
+    // eslint-disable-next-line no-console
     console.error(`Error: ${error}`);
 
     process.exit(1);

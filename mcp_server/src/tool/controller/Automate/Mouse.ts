@@ -1,4 +1,3 @@
-import { stdout } from "process";
 import { mouse, straightTo, Point } from "@nut-tree-fork/nut-js";
 
 const move = async (x: number, y: number): Promise<string> => {
@@ -23,6 +22,4 @@ if (argumentList[0] === "move") {
     result = await click(Number(argumentList[1]));
 }
 
-if (!stdout.write(result)) {
-    await new Promise<void>((resolve) => stdout.once("drain", resolve));
-}
+process.stdout.write(result);
