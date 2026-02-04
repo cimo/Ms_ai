@@ -63,11 +63,11 @@ export const extract = async (
 
                 resultList.push({
                     id: stdout.id,
+                    text: stdout.text,
                     centerPoint: {
                         x: (xMin + xMax) / 2,
                         y: (yMin + yMax) / 2
                     },
-                    text: stdout.text,
                     match: stdout.match
                 });
             }

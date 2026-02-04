@@ -1,12 +1,11 @@
-// Source
+//import { exec } from "child_process";
 import { z } from "zod";
 import type { Context } from "fastmcp";
 
 // Source
+//import * as helperAutomate from "./controller/Automate/Helper.js";
 import * as model from "./model/Automate.js";
-import * as display from "./controller/Automate/Display.js";
-import * as mouse from "./controller/Automate/Mouse.js";
-import * as ocr from "./controller/Automate/Ocr.js";
+//import * as ocr from "./controller/Automate/Ocr.js";
 
 const ocrParameter = z.object({
     searchText: z.string().optional().describe("searchText (string) : Optional, exact phrase to find in recognized text.")
@@ -41,8 +40,8 @@ export const toolAutomateOcr = {
         "- List of elements present in the image with these parameters:\n" +
         "{\n" +
         "id: number; : A unique identifier\n" +
-        "centerPoint: { x: number; y: number; }; : x and y mouse coordinates\n" +
         "text: string; : Element label\n" +
+        "centerPoint: { x: number; y: number; }; : x and y mouse coordinates\n" +
         "match: boolean; : If label matches with the searchText\n" +
         "}",
     parameters: ocrParameter,
@@ -53,7 +52,7 @@ export const toolAutomateOcr = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            const displayNumber = await display.number(context.sessionId);
+            /*const displayNumber = await display.number(context.sessionId);
 
             await display.start(displayNumber);
 
@@ -61,7 +60,7 @@ export const toolAutomateOcr = {
 
             await ocr.login(context.sessionId);
             resultList = await ocr.extract(context.sessionId, file, argument.searchText, "data");
-            ocr.logout(context.sessionId);
+            ocr.logout(context.sessionId);*/
         }
 
         await reportProgress({ progress: 100, total: 100 });
@@ -87,7 +86,7 @@ export const toolAutomateMouseMove = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            result = await mouse.move(argument.x, argument.y);
+            //result = await mouse.move(argument.x, argument.y);
         }
 
         await reportProgress({ progress: 100, total: 100 });
@@ -115,8 +114,8 @@ export const toolAutomateMouseClick = {
         await reportProgress({ progress: 0, total: 100 });
 
         if (context.sessionId) {
-            const button = (argument.button ?? 0) as 0 | 1 | 2;
-            result = await mouse.click(button);
+            //const button = (argument.button ?? 0) as 0 | 1 | 2;
+            //result = await mouse.click(button);
         }
 
         await reportProgress({ progress: 100, total: 100 });

@@ -7,7 +7,7 @@ import { toolAutomateOcr, toolAutomateMouseMove, toolAutomateMouseClick } from "
 export const URL_MCP = new URL(process.env["MS_AI_URL_MCP"] as string);
 
 const server = new FastMCP<Record<string, unknown>>({
-    name: "Tool server",
+    name: "Microservice mcp",
     version: "1.0.0"
 });
 

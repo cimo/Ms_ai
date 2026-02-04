@@ -15,3 +15,9 @@ export interface Ilimiter {
 export interface Irequest extends Request {
     clientIp?: string | undefined;
 }
+
+export interface Iuser {
+    username: string;
+    accessToken: string;
+    display: number;
+}
