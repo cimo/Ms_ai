@@ -127,12 +127,10 @@ export default class Server {
             this.app.post("/login", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const requestAuthorization = request.headers["authorization"] as string | undefined;
+                const requestAuthorization = request.headers["authorization"];
 
                 if (requestAuthorization) {
                     const token = requestAuthorization.substring(7);
-
-                    this.userObject[token] = {} as modelServer.Iuser;
 
                     const result = await controllerMicrosoft.loginWithAuthenticationCode(token);
 
@@ -147,14 +145,12 @@ export default class Server {
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
-                const requestAuthorization = request.headers["authorization"] as string | undefined;
+                const requestAuthorization = request.headers["authorization"];
 
                 if (requestAuthorization) {
                     const token = requestAuthorization.substring(7);
 
                     controllerXvfb.stop(token);
-
-                    delete this.userObject[token];
 
                     helperSrc.responseBody("ok", "", response, 200);
                 } else {
@@ -171,4 +167,4 @@ controllerServer.createServer();
 
 Cc.execute(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}cronjob/`);
 
-helperSrc.keepProcess();
+//helperSrc.keepProcess();
