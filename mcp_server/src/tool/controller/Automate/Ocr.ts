@@ -25,13 +25,14 @@ export const login = async (sessionId: string): Promise<string> => {
 
 export const extract = async (
     sessionId: string,
-    image: Buffer,
+    image: string,
     searchText: string | undefined,
     dataType: string
 ): Promise<model.ItoolOcrResult[]> => {
     let resultList: model.ItoolOcrResult[] = [];
 
-    const blob = new Blob([image], { type: "image/jpg" });
+    const buffer = Buffer.from(image, "base64");
+    const blob = new Blob([buffer], { type: "image/jpg" });
 
     const formData = new FormData();
     formData.append("language", "");

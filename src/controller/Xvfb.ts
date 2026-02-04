@@ -25,9 +25,6 @@ export default class Xvfb {
             display: result
         };
 
-        // eslint-disable-next-line no-console
-        console.log("cimo", this.userObject[uniqueId]);
-
         return result;
     };
 
@@ -40,7 +37,7 @@ export default class Xvfb {
 
         const display = this.display(uniqueId);
 
-        exec(`Xvfb :${display} -screen 0 1920x1080x24`);
+        exec(`Xvfb :${display} -screen 0 1920x1080x24 >> "${helperSrc.PATH_ROOT}${helperSrc.PATH_LOG}xvfb.log" 2>&1`);
     };
 
     stop = (uniqueId: string): void => {
