@@ -167,4 +167,4 @@ controllerServer.createServer();
 
 Cc.execute(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}cronjob/`);
 
-//helperSrc.keepProcess();
+helperSrc.keepProcess();
