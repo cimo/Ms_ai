@@ -18,7 +18,7 @@
         "execute": "nodemon --config nodemon.json"
     },
     "dependencies": {
-        "@cimo/authentication": "1.1.28",
+        "@cimo/authentication": "1.1.29",
         "@cimo/environment": "1.0.21",
         "@cimo/cronjob": "1.0.8",
         "@cimo/request": "1.5.28",
@@ -27,9 +27,7 @@
         "express-rate-limit": "7.5.0",
         "cookie-parser": "1.4.7",
         "cors": "2.8.5",
-        "@azure/msal-node": "5.0.2",
-        "chrome-launcher": "1.2.1",
-        "sharp": "0.34.5"
+        "@azure/msal-node": "5.0.2"
     },
     "devDependencies": {
         "typescript": "5.7.2",

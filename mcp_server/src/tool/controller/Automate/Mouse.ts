@@ -1,13 +1,28 @@
+import { stdout } from "process";
 import { mouse, straightTo, Point } from "@nut-tree-fork/nut-js";
 
-export const move = async (x: number, y: number): Promise<string> => {
+const move = async (x: number, y: number): Promise<string> => {
     await mouse.move(straightTo(new Point(x, y)));
 
     return "ok";
 };
 
-export const click = async (button: number): Promise<string> => {
+const click = async (button: number): Promise<string> => {
     await mouse.click(button);
 
     return "ok";
 };
+
+const argumentList = process.argv.slice(2);
+
+let result = "";
+
+if (argumentList[0] === "move") {
+    result = await move(Number(argumentList[1]), Number(argumentList[2]));
+} else if (argumentList[0] === "click") {
+    result = await click(Number(argumentList[1]));
+}
+
+if (!stdout.write(result)) {
+    await new Promise<void>((resolve) => stdout.once("drain", resolve));
+}

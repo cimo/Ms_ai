@@ -6,6 +6,8 @@ import { Ce } from "@cimo/environment/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
+import * as modelServer from "../model/Server.js";
+import * as modelMicrosoft from "../model/Microsoft.js";
 
 Ce.loadFile("./env/microsoft.env");
 
@@ -20,7 +22,7 @@ export default class Microsoft {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
-    private userObject: Record<string, string>;
+    private userObject: Record<string, modelServer.Iuser>;
 
     // Method
     private base64Url(input: Buffer | string): string {
@@ -51,13 +53,13 @@ export default class Microsoft {
         }
     };
 
-    constructor(app: Express.Express, limiter: RateLimitRequestHandler, userObject: Record<string, string>) {
+    constructor(app: Express.Express, limiter: RateLimitRequestHandler, userObject: Record<string, modelServer.Iuser>) {
         this.app = app;
         this.limiter = limiter;
         this.userObject = userObject;
     }
 
-    loginWithAuthenticationCode = async (): Promise<string> => {
+    loginWithAuthenticationCode = async (uniqueId: string): Promise<string> => {
         let result = "";
 
         if (AD_TENANT && AD_CLIENT && AD_CLIENT_SECRET) {
@@ -66,7 +68,7 @@ export default class Microsoft {
             const parameterObject: AuthorizationUrlRequest = {
                 scopes: JSON.parse(AD_SCOPE),
                 redirectUri: AD_URL_REDIRECT,
-                state: codeVerifier,
+                state: `${codeVerifier}:-:${uniqueId}`,
                 codeChallenge,
                 codeChallengeMethod: "S256",
                 claims: this.claimsJsonObject
@@ -80,12 +82,16 @@ export default class Microsoft {
         return result;
     };
 
-    codeToToken = async (code: string, state: string): Promise<Record<string, string>> => {
+    codeToToken = async (code: string, state: string): Promise<modelMicrosoft.IcodeToTokenResult> => {
+        let result = {} as modelMicrosoft.IcodeToTokenResult;
+
+        const stateSplit = state.split(":-:");
+
         const tokenRequestObject: AuthorizationCodeRequest = {
             code,
             redirectUri: AD_URL_REDIRECT,
             scopes: JSON.parse(AD_SCOPE),
-            codeVerifier: state,
+            codeVerifier: stateSplit[0],
             claims: this.claimsJsonObject
         };
 
@@ -100,13 +106,14 @@ export default class Microsoft {
         }
 
         if (username !== "") {
-            return {
+            result = {
+                uniqueId: stateSplit[1],
                 username,
                 accessToken: authResult.accessToken
             };
         }
 
-        return {};
+        return result;
     };
 
     api = (): void => {
@@ -116,7 +123,11 @@ export default class Microsoft {
 
             this.codeToToken(code, state)
                 .then((result) => {
-                    this.userObject[result["username"]] = result["accessToken"];
+                    this.userObject[result.uniqueId] = {
+                        ...this.userObject[result.uniqueId],
+                        username: result.username,
+                        accessToken: result.accessToken
+                    };
 
                     helperSrc.responseBody("ok", "", response, 200);
                 })
@@ -132,7 +143,7 @@ export default class Microsoft {
                 helperSrc.responseBody("", "ko", response, 500);
             }
 
-            helperSrc.responseBody(this.userObject[username], "", response, 200);
+            helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
         });
     };
 }

@@ -14,13 +14,14 @@ import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import ControllerLmStudio from "./LmStudio.js";
 import ControllerMicrosoft from "./Microsoft.js";
+import ControllerXvfb from "./Xvfb.js";
 
 export default class Server {
     // Variable
     private corsOption: modelServer.Icors;
     private limiter: RateLimitRequestHandler;
     private app: Express.Express;
-    private userObject: Record<string, string>;
+    private userObject: Record<string, modelServer.Iuser>;
 
     // Method
     constructor() {
@@ -107,6 +108,8 @@ export default class Server {
             const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
             controllerMicrosoft.api();
 
+            const controllerXvfb = new ControllerXvfb(this.userObject);
+
             helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
@@ -121,18 +124,42 @@ export default class Server {
                 helperSrc.responseBody(`Client ip: ${request.clientIp || ""}`, "", response, 200);
             });
 
-            this.app.get("/login", this.limiter, async (_request: Request, response: Response) => {
+            this.app.post("/login", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const result = await controllerMicrosoft.loginWithAuthenticationCode();
+                const requestAuthorization = request.headers["authorization"] as string | undefined;
 
-                helperSrc.responseBody(result, "", response, 200);
+                if (requestAuthorization) {
+                    const token = requestAuthorization.substring(7);
+
+                    this.userObject[token] = {} as modelServer.Iuser;
+
+                    const result = await controllerMicrosoft.loginWithAuthenticationCode(token);
+
+                    controllerXvfb.start(token);
+
+                    helperSrc.responseBody(result, "", response, 200);
+                } else {
+                    helperSrc.responseBody("", "ko", response, 500);
+                }
             });
 
-            this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
-                helperSrc.responseBody("ok", "", response, 200);
+                const requestAuthorization = request.headers["authorization"] as string | undefined;
+
+                if (requestAuthorization) {
+                    const token = requestAuthorization.substring(7);
+
+                    controllerXvfb.stop(token);
+
+                    delete this.userObject[token];
+
+                    helperSrc.responseBody("ok", "", response, 200);
+                } else {
+                    helperSrc.responseBody("", "ko", response, 500);
+                }
             });
         });
     };

@@ -19,10 +19,10 @@ export interface ItoolOcrResponse {
 
 export interface ItoolOcrResult {
     id: number;
+    text: string;
     centerPoint: {
         x: number;
         y: number;
     };
-    text: string;
     match: boolean;
 }
