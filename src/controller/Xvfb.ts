@@ -9,29 +9,31 @@ export default class Xvfb {
     private userObject: Record<string, modelServer.Iuser>;
 
     // Method
-    constructor(userObject: Record<string, modelServer.Iuser>) {
-        this.userObject = userObject;
-    }
-
-    display = (uniqueId: string): number => {
+    private display = (uniqueId: string): number => {
         let result = 1;
 
-        const display = this.userObject[uniqueId].display;
+        const valueList = Object.values(this.userObject);
 
-        if (display) {
-            return display;
+        if (valueList.length > 0) {
+            const last = valueList[valueList.length - 1];
+
+            result = last.display + 1;
         }
 
-        const userObjectLength = Object.values(this.userObject).length;
+        this.userObject[uniqueId] = {
+            ...this.userObject[uniqueId],
+            display: result
+        };
 
-        if (userObjectLength > 0) {
-            result = this.userObject[userObjectLength - 1].display + 1;
-        }
-
-        this.userObject[uniqueId].display = result;
+        // eslint-disable-next-line no-console
+        console.log("cimo", this.userObject[uniqueId]);
 
         return result;
     };
+
+    constructor(userObject: Record<string, modelServer.Iuser>) {
+        this.userObject = userObject;
+    }
 
     start = (uniqueId: string): void => {
         helperSrc.writeLog("Xvfb.ts - start()", `Display uniqueId: ${uniqueId}`);
@@ -47,5 +49,7 @@ export default class Xvfb {
         const display = this.display(uniqueId);
 
         exec(`pkill -f "Xvfb :${display}"`);
+
+        delete this.userObject[uniqueId];
     };
 }
