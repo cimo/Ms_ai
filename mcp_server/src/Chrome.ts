@@ -68,6 +68,8 @@ const execute = async (): Promise<void> => {
                 end = pending.indexOf("\x00");
 
                 resolve(JSON.parse(msg));
+
+                return;
             }
         });
     });

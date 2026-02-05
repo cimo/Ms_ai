@@ -4,9 +4,9 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 import { Cu } from "@cimo/queue/dist/src/Main.js";
 
 // Source
-import * as Instance from "../Instance.js";
+import * as InstanceOpenAi from "../InstanceOpenAi.js";
 import * as helperSrc from "../HelperSrc.js";
-import * as ModelLmStudio from "../model/LmStudio.js";
+import * as modelLmStudio from "../model/LmStudio.js";
 
 export default class LmStudio {
     // Variable
@@ -26,8 +26,8 @@ export default class LmStudio {
 
     api = (): void => {
         this.app.get("/api/v1/models", this.limiter, Ca.authenticationMiddleware, (_, response: Response) => {
-            Instance.api
-                .get<ModelLmStudio.IresponseModel>("/v1/models", {
+            InstanceOpenAi.api
+                .get<modelLmStudio.IresponseModel>("/v1/models", {
                     headers: {
                         "Content-Type": "application/json"
                     }
@@ -52,9 +52,11 @@ export default class LmStudio {
                         this.dataDone(response);
 
                         resolve();
+
+                        return;
                     });
 
-                    Instance.api
+                    InstanceOpenAi.api
                         .stream(
                             "/v1/responses",
                             {
@@ -76,7 +78,7 @@ export default class LmStudio {
 
                                     resolve();
 
-                                    break;
+                                    return;
                                 }
 
                                 buffer += decoder.decode(value, { stream: true });
@@ -104,6 +106,8 @@ export default class LmStudio {
                             this.dataDone(response);
 
                             resolve();
+
+                            return;
                         });
                 });
             });
