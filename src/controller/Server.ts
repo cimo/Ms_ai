@@ -4,7 +4,6 @@ import CookieParser from "cookie-parser";
 import Cors from "cors";
 import * as Http from "http";
 import * as Https from "https";
-
 import Fs from "fs";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
 import { Cc } from "@cimo/cronjob/dist/src/Main.js";
@@ -15,6 +14,7 @@ import * as modelServer from "../model/Server.js";
 import ControllerLmStudio from "./LmStudio.js";
 import ControllerMicrosoft from "./Microsoft.js";
 import ControllerXvfb from "./Xvfb.js";
+import ControllerMcp from "./Mcp.js";
 
 export default class Server {
     // Variable
@@ -110,6 +110,8 @@ export default class Server {
 
             const controllerXvfb = new ControllerXvfb(this.userObject);
 
+            const controllerMcp = new ControllerMcp(this.userObject);
+
             helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
@@ -132,11 +134,16 @@ export default class Server {
                 if (requestAuthorization) {
                     const token = requestAuthorization.substring(7);
 
-                    const result = await controllerMicrosoft.loginWithAuthenticationCode(token);
+                    const microsoftUrl = await controllerMicrosoft.loginWithAuthenticationCode(token);
 
-                    controllerXvfb.start(token);
+                    await controllerXvfb.start(token);
 
-                    helperSrc.responseBody(result, "", response, 200);
+                    await controllerMcp.connection(token);
+
+                    // eslint-disable-next-line no-console
+                    console.log("cimo", this.userObject[token]);
+
+                    helperSrc.responseBody(microsoftUrl, "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }
@@ -153,6 +160,18 @@ export default class Server {
                     controllerXvfb.stop(token);
 
                     helperSrc.responseBody("ok", "", response, 200);
+                } else {
+                    helperSrc.responseBody("", "ko", response, 500);
+                }
+            });
+
+            this.app.get("/userInfo", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+                const requestAuthorization = request.headers["authorization"];
+
+                if (requestAuthorization) {
+                    const token = requestAuthorization.substring(7);
+
+                    helperSrc.responseBody(JSON.stringify(this.userObject[token]), "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }

@@ -41,7 +41,7 @@ export const extract = async (
     formData.append("dataType", dataType);
 
     await Instance.api
-        .post<model.IresponseBody>(
+        .post<model.ItoolOcrResponse[]>(
             "/api/extract",
             {
                 headers: {
@@ -51,12 +51,10 @@ export const extract = async (
             },
             formData
         )
-        .then((data) => {
-            const stdoutList = JSON.parse(data.response.stdout) as model.ItoolOcrResponse[];
-
-            for (const stdout of stdoutList) {
-                const x = stdout.polygon.map((point) => point[0]);
-                const y = stdout.polygon.map((point) => point[1]);
+        .then((response) => {
+            for (const stdout of Object.values(response)) {
+                const x = stdout.polygon.map((point: number[]) => point[0]);
+                const y = stdout.polygon.map((point: number[]) => point[1]);
                 const xMin = Math.min(...x);
                 const xMax = Math.max(...x);
                 const yMin = Math.min(...y);

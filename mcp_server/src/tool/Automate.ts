@@ -62,6 +62,8 @@ export const toolAutomateOcr = {
                 });
             });
 
+            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+
             await ocr.login(context.sessionId);
             resultList = await ocr.extract(context.sessionId, image, argument.searchText, "data");
             await ocr.logout(context.sessionId);

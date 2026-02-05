@@ -20,4 +20,5 @@ export interface Iuser {
     username: string;
     accessToken: string;
     display: number;
+    mcpSessionId: string;
 }

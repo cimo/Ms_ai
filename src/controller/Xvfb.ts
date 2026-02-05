@@ -32,7 +32,7 @@ export default class Xvfb {
         this.userObject = userObject;
     }
 
-    start = (uniqueId: string): void => {
+    start = async (uniqueId: string): Promise<void> => {
         helperSrc.writeLog("Xvfb.ts - start()", `Display uniqueId: ${uniqueId}`);
 
         const display = this.display(uniqueId);
