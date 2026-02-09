@@ -25,7 +25,7 @@ const requestLogic = (config: RequestInit): RequestInit => {
 
 const responseLogic = (response: Response) => {
     if (response.status === 403 || response.status === 500) {
-        HelperSrc.writeLog("error", response.status.toString());
+        HelperSrc.writeLog("Instance.ts - responseLogic() - Error", response.status.toString());
     }
 
     return response;

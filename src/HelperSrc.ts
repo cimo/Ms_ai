@@ -21,7 +21,6 @@ export const NODE_ENV = Ce.checkVariable("MS_AI_NODE_ENV") || (process.env["MS_A
 export const URL_ROOT = Ce.checkVariable("MS_AI_URL_ROOT") || (process.env["MS_A_URL_ROOT"] as string);
 export const URL_CORS_ORIGIN = Ce.checkVariable("MS_AI_URL_CORS_ORIGIN") || (process.env["MS_A_URL_CORS_ORIGIN"] as string);
 export const URL_OPEN_AI = Ce.checkVariable("MS_AI_URL_OPEN_AI") || (process.env["MS_AI_URL_OPEN_AI"] as string);
-export const URL_MCP = Ce.checkVariable("MS_AI_URL_MCP") || (process.env["MS_AI_URL_MCP"] as string);
 export const PATH_CERTIFICATE_KEY = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_KEY");
 export const PATH_CERTIFICATE_CRT = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_CRT");
 export const PATH_FILE = Ce.checkVariable("MS_AI_PATH_FILE");
@@ -294,3 +293,7 @@ export const findFileInDirectoryRecursive = (path: string, extension: string, ca
         });
     });
 };
+
+export const headerBearerToken = (authorization: string | undefined): string => {
+    return authorization ? authorization.substring(7) : "";
+}

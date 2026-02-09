@@ -117,7 +117,7 @@ export default class Microsoft {
     };
 
     api = (): void => {
-        this.app.get("/ms_ai_redirect", this.limiter, (request: Request, response: Response) => {
+        this.app.get("/ms-ai-redirect", this.limiter, (request: Request, response: Response) => {
             const code = request.query["code"] as string;
             const state = request.query["state"] as string;
 
@@ -136,7 +136,7 @@ export default class Microsoft {
                 });
         });
 
-        this.app.get("/ms_ai_verify", this.limiter, (request: Request, response: Response) => {
+        this.app.get("/ms-ai-verify", this.limiter, (request: Request, response: Response) => {
             const username = request.query["username"] as string;
 
             if (!(username in this.userObject)) {

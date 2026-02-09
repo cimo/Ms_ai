@@ -19,6 +19,4 @@ export interface Irequest extends Request {
 export interface Iuser {
     username: string;
     accessToken: string;
-    display: number;
-    mcpSessionId: string;
 }

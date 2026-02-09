@@ -2,8 +2,8 @@
 
 Microservice ai.
 
-Depend from "Ms_cronjob" (use "ms_cronjob-volume" for share the certificate).
-It's possible to use a personal certificate instead of "Ms_cronjob", just add the certificate in the ".ms_cronjob-volume" folders.
+Depend on "Ms_cronjob" (use "ms_cronjob-volume" to share the certificate).
+It's possible to use a personal certificate instead of "Ms_cronjob", just add the certificate to the ".ms_cronjob-volume" folder.
 
 ## Info:
 
@@ -55,14 +55,16 @@ NVIDIA GeForce RTX 3060 - (Host GPU available)
 
     - .cache
     - .config
+    - .cuda
     - .lmstudio
     - .local
+    - .ms_cronjob-volume/certificate
     - .npm
     - .nv
     - .pki
-    - .lmstudio-home-pointer
     - dist
     - node_modules
+    - .lmstudio-home-pointer
     - package-lock.json
 
 2. Follow the "Installation" instructions.
@@ -71,10 +73,4 @@ NVIDIA GeForce RTX 3060 - (Host GPU available)
 
     ```
     bash script/lm_studio.sh "gui"
-    ```
-
-4. For execute "Chrome" GUI write on terminal:
-
-    ```
-    bash script/chrome.sh
     ```

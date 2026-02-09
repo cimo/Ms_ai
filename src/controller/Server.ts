@@ -13,8 +13,6 @@ import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import ControllerLmStudio from "./LmStudio.js";
 import ControllerMicrosoft from "./Microsoft.js";
-import ControllerXvfb from "./Xvfb.js";
-import ControllerMcp from "./Mcp.js";
 
 export default class Server {
     // Variable
@@ -108,11 +106,7 @@ export default class Server {
             const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
             controllerMicrosoft.api();
 
-            const controllerXvfb = new ControllerXvfb(this.userObject);
-
-            const controllerMcp = new ControllerMcp(this.userObject);
-
-            helperSrc.writeLog("Server.ts - createServer() - listen()", `Port: ${helperSrc.SERVER_PORT}`);
+            helperSrc.writeLog("Server.ts - createServer() - listen() - Port", helperSrc.SERVER_PORT);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 if (request.accepts("html")) {
@@ -129,19 +123,10 @@ export default class Server {
             this.app.post("/login", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const requestAuthorization = request.headers["authorization"];
+                const token = helperSrc.headerBearerToken(request.headers["authorization"]);
 
-                if (requestAuthorization) {
-                    const token = requestAuthorization.substring(7);
-
+                if (token) {
                     const microsoftUrl = await controllerMicrosoft.loginWithAuthenticationCode(token);
-
-                    await controllerXvfb.start(token);
-
-                    await controllerMcp.connection(token);
-
-                    // eslint-disable-next-line no-console
-                    console.log("cimo", this.userObject[token]);
 
                     helperSrc.responseBody(microsoftUrl, "", response, 200);
                 } else {
@@ -152,25 +137,13 @@ export default class Server {
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
-                const requestAuthorization = request.headers["authorization"];
-
-                if (requestAuthorization) {
-                    const token = requestAuthorization.substring(7);
-
-                    controllerXvfb.stop(token);
-
-                    helperSrc.responseBody("ok", "", response, 200);
-                } else {
-                    helperSrc.responseBody("", "ko", response, 500);
-                }
+                helperSrc.responseBody("ok", "", response, 200);
             });
 
-            this.app.get("/userInfo", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                const requestAuthorization = request.headers["authorization"];
+            this.app.get("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+                const token = helperSrc.headerBearerToken(request.headers["authorization"]);
 
-                if (requestAuthorization) {
-                    const token = requestAuthorization.substring(7);
-
+                if (token) {
                     helperSrc.responseBody(JSON.stringify(this.userObject[token]), "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
