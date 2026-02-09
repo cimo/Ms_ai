@@ -296,4 +296,4 @@ export const findFileInDirectoryRecursive = (path: string, extension: string, ca
 
 export const headerBearerToken = (authorization: string | undefined): string => {
     return authorization ? authorization.substring(7) : "";
-}
+};

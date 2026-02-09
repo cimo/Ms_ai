@@ -22,14 +22,14 @@ fi
 while true
 do
     sleep 3
-
-    if [[ -d "${pathBackend}llama.cpp-linux-x86_64-avx2-2.0.1/" \
-    && -d "${pathBackend}llama.cpp-linux-x86_64-nvidia-cuda-avx2-2.0.1/" \
-    && -d "${pathBackend}llama.cpp-linux-x86_64-vulkan-avx2-2.0.1/" ]]
+    
+    if compgen -G "${pathBackend}llama.cpp-linux-x86_64-avx2-"*/ >/dev/null \
+    && compgen -G "${pathBackend}llama.cpp-linux-x86_64-nvidia-cuda-avx2-"*/ >/dev/null \
+    && compgen -G "${pathBackend}llama.cpp-linux-x86_64-vulkan-avx2-"*/ >/dev/null
     then
-        if [[ -d "${pathBackendVendor}_amphibian/" \
-        && -d "${pathBackendVendor}linux-llama-cuda-vendor-v1/" \
-        && -d "${pathBackendVendor}linux-llama-vulkan-vendor-v1/" ]]
+        if compgen -G "${pathBackendVendor}_amphibian"*/ >/dev/null \
+        && compgen -G "${pathBackendVendor}linux-llama-cuda-vendor-"*/ >/dev/null \
+        && compgen -G "${pathBackendVendor}linux-llama-vulkan-vendor-"*/ >/dev/null
         then
             break
         fi
