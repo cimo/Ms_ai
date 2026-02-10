@@ -120,31 +120,44 @@ export default class Server {
                 helperSrc.responseBody(`Client ip: ${request.clientIp || ""}`, "", response, 200);
             });
 
-            this.app.post("/login", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
+            this.app.post("/login", this.limiter, (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const token = helperSrc.headerBearerToken(request.headers["authorization"]);
+                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
 
-                if (token) {
-                    const microsoftUrl = await controllerMicrosoft.loginWithAuthenticationCode(token);
-
-                    helperSrc.responseBody(microsoftUrl, "", response, 200);
+                if (bearerToken) {
+                    controllerMicrosoft
+                        .loginWithAuthenticationCode(bearerToken)
+                        .then((result) => {
+                            helperSrc.responseBody(result, "", response, 200);
+                        })
+                        .catch(() => {
+                            helperSrc.responseBody("", "ko", response, 500);
+                        });
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }
             });
 
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
+                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
 
-                helperSrc.responseBody("ok", "", response, 200);
+                if (bearerToken) {
+                    Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
+
+                    delete this.userObject[bearerToken];
+
+                    helperSrc.responseBody("ok", "", response, 200);
+                } else {
+                    helperSrc.responseBody("", "ko", response, 500);
+                }
             });
 
-            this.app.get("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                const token = helperSrc.headerBearerToken(request.headers["authorization"]);
+            this.app.post("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
 
-                if (token) {
-                    helperSrc.responseBody(JSON.stringify(this.userObject[token]), "", response, 200);
+                if (bearerToken) {
+                    helperSrc.responseBody(JSON.stringify(this.userObject[bearerToken]), "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }

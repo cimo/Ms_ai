@@ -1,8 +1,8 @@
 #!/bin/bash
 
-urlOpenAi="${MS_AI_URL_OPEN_AI#*://}"
-urlOpenAiHost="${urlOpenAi%%:*}"
-urlOpenAiPort="${urlOpenAi##*:}"
+urlEngine="${MS_AI_URL_ENGINE#*://}"
+urlEngineHost="${urlEngine%%:*}"
+urlEnginePort="${urlEngine##*:}"
 
 pathLmStudio="/home/squashfs-root/lm-studio"
 pathLms="${PATH_ROOT}.lmstudio/bin/lms"
@@ -36,7 +36,7 @@ do
     fi
 done
 
-"${pathLms}" server start --bind ${urlOpenAiHost} --port ${urlOpenAiPort}
+"${pathLms}" server start --bind ${urlEngineHost} --port ${urlEnginePort}
 
 read -r -a modelList <<< "$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ',' ' ')"
 
@@ -44,7 +44,7 @@ for model in "${modelList[@]}"
 do
     echo "Model: ${model}"
 
-    download=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download -H "Content-Type: application/json" -d "{\"model\": \"https://huggingface.co/${model}\", \"quantization\": \"Q8_0\"}")
+    download=$(curl -s ${MS_AI_URL_ENGINE}/api/v1/models/download -H "Content-Type: application/json" -d "{\"model\": \"https://huggingface.co/${model}\", \"quantization\": \"Q8_0\"}")
 
     jobId=$(echo ${download} | jq -r '.job_id')
 
@@ -58,7 +58,7 @@ do
         do
             sleep 3
 
-            status=$(curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/download/status/${jobId} | jq -r '.status')
+            status=$(curl -s ${MS_AI_URL_ENGINE}/api/v1/models/download/status/${jobId} | jq -r '.status')
 
             echo "Status: ${status}"
 
@@ -91,7 +91,7 @@ do
         
         modelIdentifier=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||' | tr '[:upper:]' '[:lower:]')
         
-        curl -s ${MS_AI_URL_OPEN_AI}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
+        curl -s ${MS_AI_URL_ENGINE}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
 
         echo ""
     fi
