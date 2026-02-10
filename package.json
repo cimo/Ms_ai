@@ -21,7 +21,7 @@
         "@cimo/authentication": "1.1.29",
         "@cimo/environment": "1.0.21",
         "@cimo/cronjob": "1.0.8",
-        "@cimo/request": "1.5.31",
+        "@cimo/request": "1.6.32",
         "@cimo/queue": "1.0.1",
         "express": "4.22.1",
         "express-rate-limit": "7.5.0",

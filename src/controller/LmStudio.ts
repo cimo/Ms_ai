@@ -4,8 +4,8 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 import { Cu } from "@cimo/queue/dist/src/Main.js";
 
 // Source
-import * as Instance from "../Instance.js";
 import * as helperSrc from "../HelperSrc.js";
+import * as instance from "../Instance.js";
 import * as modelLmStudio from "../model/LmStudio.js";
 
 export default class LmStudio {
@@ -25,8 +25,8 @@ export default class LmStudio {
     }
 
     api = (): void => {
-        this.app.get("/api/v1/models", this.limiter, Ca.authenticationMiddleware, (_, response: Response) => {
-            Instance.api
+        this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (_, response: Response) => {
+            instance.api
                 .get<modelLmStudio.IresponseModel>("/v1/models", {
                     headers: {
                         "Content-Type": "application/json"
@@ -40,7 +40,7 @@ export default class LmStudio {
                 });
         });
 
-        this.app.post("/api/v1/responses", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+        this.app.post("/api/response", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             response.setHeader("Content-Type", "text/event-stream");
             response.setHeader("Cache-Control", "no-cache");
             response.setHeader("Connection", "keep-alive");
@@ -56,7 +56,7 @@ export default class LmStudio {
                         return;
                     });
 
-                    Instance.api
+                    instance.api
                         .stream(
                             "/v1/responses",
                             {
@@ -112,7 +112,7 @@ export default class LmStudio {
                 });
             });
 
-            Cu.processParallel(2);
+            Cu.processParallel(4);
         });
     };
 }

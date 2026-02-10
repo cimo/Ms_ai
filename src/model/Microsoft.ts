@@ -1,5 +1,5 @@
 export interface IcodeToTokenResult {
-    uniqueId: string;
+    bearerToken: string;
     username: string;
     accessToken: string;
 }

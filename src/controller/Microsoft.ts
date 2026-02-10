@@ -1,7 +1,7 @@
 import Express, { Request, Response } from "express";
 import { RateLimitRequestHandler } from "express-rate-limit";
-import { ConfidentialClientApplication, Configuration, AuthorizationUrlRequest, AuthorizationCodeRequest } from "@azure/msal-node";
 import * as Crypto from "crypto";
+import { ConfidentialClientApplication, Configuration, AuthorizationUrlRequest, AuthorizationCodeRequest } from "@azure/msal-node";
 import { Ce } from "@cimo/environment/dist/src/Main.js";
 
 // Source
@@ -59,16 +59,16 @@ export default class Microsoft {
         this.userObject = userObject;
     }
 
-    loginWithAuthenticationCode = async (uniqueId: string): Promise<string> => {
+    loginWithAuthenticationCode = async (bearerToken: string): Promise<string> => {
         let result = "";
 
-        if (AD_TENANT && AD_CLIENT && AD_CLIENT_SECRET) {
+        if (AD_URL_LOGIN && AD_URL_REDIRECT && AD_SCOPE && AD_TENANT && AD_CLIENT && AD_CLIENT_SECRET) {
             const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
 
             const parameterObject: AuthorizationUrlRequest = {
                 scopes: JSON.parse(AD_SCOPE),
                 redirectUri: AD_URL_REDIRECT,
-                state: `${codeVerifier}:-:${uniqueId}`,
+                state: `${codeVerifier}:-:${bearerToken}`,
                 codeChallenge,
                 codeChallengeMethod: "S256",
                 claims: this.claimsJsonObject
@@ -77,6 +77,8 @@ export default class Microsoft {
             const cca = new ConfidentialClientApplication(this.configurationObject);
 
             result = await cca.getAuthCodeUrl(parameterObject);
+        } else {
+            result = "Warning: Configure 'microsoft.env' file.";
         }
 
         return result;
@@ -105,13 +107,11 @@ export default class Microsoft {
             username = authResult.account.username;
         }
 
-        if (username !== "") {
-            result = {
-                uniqueId: stateSplit[1],
-                username,
-                accessToken: authResult.accessToken
-            };
-        }
+        result = {
+            bearerToken: stateSplit[1],
+            username,
+            accessToken: authResult.accessToken
+        };
 
         return result;
     };
@@ -123,8 +123,8 @@ export default class Microsoft {
 
             this.codeToToken(code, state)
                 .then((result) => {
-                    this.userObject[result.uniqueId] = {
-                        ...this.userObject[result.uniqueId],
+                    this.userObject[result.bearerToken] = {
+                        ...this.userObject[result.bearerToken],
                         username: result.username,
                         accessToken: result.accessToken
                     };
@@ -139,11 +139,11 @@ export default class Microsoft {
         this.app.get("/ms-ai-verify", this.limiter, (request: Request, response: Response) => {
             const username = request.query["username"] as string;
 
-            if (!(username in this.userObject)) {
+            if (username in this.userObject) {
+                helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
+            } else {
                 helperSrc.responseBody("", "ko", response, 500);
             }
-
-            helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
         });
     };
 }
