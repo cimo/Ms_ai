@@ -1,7 +1,7 @@
 import Express, { Request, Response } from "express";
 import { RateLimitRequestHandler } from "express-rate-limit";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
-import { Cu } from "@cimo/queue/dist/src/Main.js";
+import { Cq } from "@cimo/queue/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
@@ -46,7 +46,7 @@ export default class LmStudio {
             response.setHeader("Connection", "keep-alive");
             response.setHeader("X-Accel-Buffering", "no");
 
-            Cu.list.push(() => {
+            Cq.list.push(() => {
                 return new Promise((resolve) => {
                     request.on("close", () => {
                         this.dataDone(response);
@@ -112,7 +112,7 @@ export default class LmStudio {
                 });
             });
 
-            Cu.processParallel(4);
+            Cq.processParallel(4);
         });
     };
 }
