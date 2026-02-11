@@ -36,16 +36,7 @@ export default class Server {
             standardHeaders: true,
             legacyHeaders: false,
             keyGenerator: (request: Request) => {
-                let result = "";
-
-                const forwarded = request.headers["x-forwarded-for"];
-                const ip = typeof forwarded === "string" ? forwarded.split(",")[0] : request.ip;
-
-                if (ip) {
-                    result = ip.split(":").pop() || "";
-                }
-
-                return result;
+                return helperSrc.readClientIp(request).split(":").pop() || "";
             }
         });
 
@@ -71,10 +62,9 @@ export default class Server {
             response.setHeader("Pragma", "no-cache");
             response.setHeader("Expires", "0");
 
-            const headerForwarded = request.headers["x-forwarded-for"] ? request.headers["x-forwarded-for"][0] : "";
             const remoteAddress = request.socket.remoteAddress ? request.socket.remoteAddress : "";
 
-            request.clientIp = headerForwarded || remoteAddress;
+            request.clientIp = helperSrc.readClientIp(request) || remoteAddress;
 
             next();
         });
@@ -123,7 +113,7 @@ export default class Server {
             this.app.post("/login", this.limiter, (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
+                const bearerToken = helperSrc.headerBearerToken(request);
 
                 if (bearerToken) {
                     controllerMicrosoft
@@ -140,7 +130,7 @@ export default class Server {
             });
 
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
+                const bearerToken = helperSrc.headerBearerToken(request);
 
                 if (bearerToken) {
                     Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
@@ -154,10 +144,12 @@ export default class Server {
             });
 
             this.app.post("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                const bearerToken = helperSrc.headerBearerToken(request.headers["authorization"]);
+                const bearerToken = helperSrc.headerBearerToken(request);
 
                 if (bearerToken) {
-                    helperSrc.responseBody(JSON.stringify(this.userObject[bearerToken]), "", response, 200);
+                    const userInfo = this.userObject[bearerToken] ? JSON.stringify(this.userObject[bearerToken]) : "";
+
+                    helperSrc.responseBody(userInfo, "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }
