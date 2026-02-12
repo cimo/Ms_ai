@@ -41,6 +41,11 @@ export default class LmStudio {
         });
 
         this.app.post("/api/response", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            const cookie = request.headers["cookie"] as string;
+
+            // eslint-disable-next-line no-console
+            console.log("cimo", cookie);
+
             response.setHeader("Content-Type", "text/event-stream");
             response.setHeader("Cache-Control", "no-cache");
             response.setHeader("Connection", "keep-alive");
@@ -61,7 +66,8 @@ export default class LmStudio {
                             "/v1/responses",
                             {
                                 headers: {
-                                    "Content-Type": "application/json"
+                                    "Content-Type": "application/json",
+                                    Cookie: cookie
                                 }
                             },
                             request.body
