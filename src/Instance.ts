@@ -1,9 +1,9 @@
 import { Cr } from "@cimo/request/dist/src/Main.js";
 
 // Source
-import * as HelperSrc from "./HelperSrc.js";
+import * as helperSrc from "./HelperSrc.js";
 
-export const api = new Cr(`${HelperSrc.URL_ENGINE || ""}`);
+export const api = new Cr(`${helperSrc.URL_ENGINE || ""}`);
 
 api.setRequestInterceptor((config: RequestInit) => {
     return requestLogic(config);
@@ -25,7 +25,7 @@ const requestLogic = (config: RequestInit): RequestInit => {
 
 const responseLogic = (response: Response) => {
     if (response.status === 403 || response.status === 500) {
-        HelperSrc.writeLog("Instance.ts - responseLogic() - Error", response.status.toString());
+        helperSrc.writeLog("Instance.ts - responseLogic() - Error", response.status.toString());
     }
 
     return response;
