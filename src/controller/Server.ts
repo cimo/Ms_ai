@@ -125,6 +125,9 @@ export default class Server {
             });
 
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+                // eslint-disable-next-line no-console
+                console.log(request.headers["cookie"] as string);
+
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
