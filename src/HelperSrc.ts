@@ -23,6 +23,7 @@ export const URL_CORS_ORIGIN = Ce.checkVariable("MS_AI_URL_CORS_ORIGIN") || (pro
 export const URL_ENGINE = Ce.checkVariable("MS_AI_URL_ENGINE") || (process.env["MS_AI_URL_ENGINE"] as string);
 export const PATH_CERTIFICATE_KEY = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_KEY");
 export const PATH_CERTIFICATE_CRT = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_CRT");
+export const PATH_CERTIFICATE_PEM = Ce.checkVariable("MS_AI_PATH_CERTIFICATE_PEM");
 export const PATH_FILE = Ce.checkVariable("MS_AI_PATH_FILE");
 export const PATH_LOG = Ce.checkVariable("MS_AI_PATH_LOG");
 export const PATH_PUBLIC = Ce.checkVariable("MS_AI_PATH_PUBLIC");
