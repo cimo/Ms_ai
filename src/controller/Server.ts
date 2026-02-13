@@ -43,6 +43,13 @@ export default class Server {
         this.userObject = {};
 
         this.app = Express();
+
+        this.app.use((req, res, next) => {
+            // eslint-disable-next-line no-console
+            console.log("[REQUEST]", req.method, req.url, req.headers);
+
+            next();
+        });
     }
 
     createSetting = (): void => {
@@ -79,7 +86,8 @@ export default class Server {
             creation = Https.createServer(
                 {
                     key: Fs.readFileSync(helperSrc.PATH_CERTIFICATE_KEY),
-                    cert: Fs.readFileSync(helperSrc.PATH_CERTIFICATE_CRT)
+                    cert: Fs.readFileSync(helperSrc.PATH_CERTIFICATE_CRT),
+                    ca: Fs.readFileSync(helperSrc.PATH_CERTIFICATE_PEM)
                 },
                 this.app
             );
@@ -111,6 +119,9 @@ export default class Server {
             });
 
             this.app.post("/login", this.limiter, async (request: Request, response: Response) => {
+                // eslint-disable-next-line no-console
+                console.log("cimo1", `request: ${JSON.stringify(request.headers)} response: ${JSON.stringify(response.getHeaders())}`);
+
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
@@ -125,9 +136,6 @@ export default class Server {
             });
 
             this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                // eslint-disable-next-line no-console
-                console.log(request.headers["cookie"] as string);
-
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
