@@ -1,5 +1,16 @@
 #!/bin/bash
 
+p1=$(printf '%s' "${1}" | xargs)
+
+if [ -z "${p1}" ]
+then
+    echo "lm_studio.sh - Missing parameter."
+
+    exit 1
+fi
+
+parameter1="${1}"
+
 urlEngine="${MS_AI_URL_ENGINE#*://}"
 urlEngineHost="${urlEngine%%:*}"
 urlEnginePort="${urlEngine##*:}"
@@ -9,7 +20,7 @@ pathLms="${PATH_ROOT}.lmstudio/bin/lms"
 pathBackend="${PATH_ROOT}.lmstudio/extensions/backends/"
 pathBackendVendor="${PATH_ROOT}.lmstudio/extensions/backends/vendor/"
 
-if [ "${1}" = "gui" ]
+if [ "${parameter1}" = "gui" ]
 then
     pkill -f "${pathLmStudio}"
     pkill -f "${pathLms}"
@@ -73,7 +84,7 @@ do
 
     echo "Model folder: ${modelIdentifierFolder}"
 
-    pathModel="/home/app/.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf"
+    pathModel="${PATH_ROOT}.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf"
 
     while [ ! -f "${pathModel}" ]
     do

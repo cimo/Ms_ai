@@ -26,12 +26,12 @@ pnpm-debug.log*
 .cuda
 .lmstudio
 .local
-.ms_cronjob-volume/**/*
-!.ms_cronjob-volume/**/
-!.ms_cronjob-volume/**/.gitkeep
 .npm
 .nv
 .pki
+certificate/**/*
+!certificate/**/
+!certificate/**/.gitkeep
 dist
 env/microsoft.env
 log/*

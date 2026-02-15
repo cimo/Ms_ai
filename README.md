@@ -14,7 +14,7 @@ It's possible to use a custom certificate instead of "Ms_cronjob", just add it t
 
 ## Microsoft
 
-1. Create a file "microsoft.env" in "env" folder and insert:
+1. Create a file "microsoft.env" in "env" folder and add:
 ```
 MS_AI_AD_URL_LOGIN=''
 MS_AI_AD_URL_REDIRECT=''
@@ -59,7 +59,6 @@ NVIDIA GeForce RTX 3060 - (Host GPU available)
     - .cuda
     - .lmstudio
     - .local
-    - .ms_cronjob-volume/certificate
     - .npm
     - .nv
     - .pki
