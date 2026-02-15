@@ -47,6 +47,13 @@ do
     fi
 done
 
+while lsof "${pathLms}" >/dev/null 2>&1
+do
+    sleep 1
+done
+
+sleep 3
+
 "${pathLms}" server start --bind ${urlEngineHost} --port ${urlEnginePort}
 
 read -r -a modelList <<< "$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ',' ' ')"
