@@ -41,9 +41,6 @@ export default class LmStudio {
         });
 
         this.app.post("/api/response", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-            // eslint-disable-next-line no-console
-            console.log("cimo2", `request: ${JSON.stringify(request.headers)} response: ${JSON.stringify(response.getHeaders())}`);
-
             const cookie = request.headers["cookie"] as string;
 
             response.setHeader("Content-Type", "text/event-stream");
