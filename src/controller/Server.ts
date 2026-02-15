@@ -43,13 +43,6 @@ export default class Server {
         this.userObject = {};
 
         this.app = Express();
-
-        this.app.use((req, res, next) => {
-            // eslint-disable-next-line no-console
-            console.log("[REQUEST]", req.method, req.url, req.headers);
-
-            next();
-        });
     }
 
     createSetting = (): void => {
@@ -119,9 +112,6 @@ export default class Server {
             });
 
             this.app.post("/login", this.limiter, async (request: Request, response: Response) => {
-                // eslint-disable-next-line no-console
-                console.log("cimo1", `request: ${JSON.stringify(request.headers)} response: ${JSON.stringify(response.getHeaders())}`);
-
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
