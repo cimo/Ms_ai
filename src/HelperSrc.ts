@@ -31,6 +31,7 @@ export const PATH_SCRIPT = Ce.checkVariable("MS_AI_PATH_SCRIPT");
 export const MIME_TYPE = Ce.checkVariable("MS_AI_MIME_TYPE") || (process.env["MS_A_MIME_TYPE"] as string);
 export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.env["MS_A_FILE_SIZE_MB"] as string);
 export const MODEL = Ce.checkVariable("MS_AI_MODEL") || (process.env["MS_AI_MODEL"] as string);
+export const QUEUE = Ce.checkVariable("MS_AI_QUEUE") || (process.env["MS_AI_QUEUE"] as string);
 
 export const localeConfiguration: Record<string, { locale: string; currency: string; dateFormat: string }> = {
     // Asia
