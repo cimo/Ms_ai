@@ -26,15 +26,13 @@ export default class Microsoft {
 
     // Method
     private base64Url(input: Buffer | string): string {
-        const buf = Buffer.isBuffer(input) ? input : Buffer.from(input, "utf8");
+        const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input, "utf8");
 
-        return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+        return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     }
 
     private generatePkceCode = (): Record<string, string> => {
-        const verifierBytes = Crypto.randomBytes(32);
-
-        const verifier = this.base64Url(verifierBytes);
+        const verifier = this.base64Url(Crypto.randomBytes(32));
         const challenge = this.base64Url(Crypto.createHash("sha256").update(verifier).digest());
 
         return { verifier, challenge };

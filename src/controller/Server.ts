@@ -111,7 +111,7 @@ export default class Server {
                 helperSrc.responseBody(`Client ip: ${request.clientIp || ""}`, "", response, 200);
             });
 
-            this.app.post("/login", this.limiter, async (request: Request, response: Response) => {
+            this.app.get("/login", this.limiter, async (request: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
@@ -125,7 +125,7 @@ export default class Server {
                 }
             });
 
-            this.app.post("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
@@ -139,7 +139,7 @@ export default class Server {
                 }
             });
 
-            this.app.post("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            this.app.get("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
                 const bearerToken = helperSrc.headerBearerToken(request);
 
                 if (bearerToken) {
