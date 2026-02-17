@@ -114,6 +114,10 @@ export default class Microsoft {
         return result;
     };
 
+    logout = (): void => {
+        // Remove ad session...
+    };
+
     api = (): void => {
         this.app.get("/ms-ai-redirect", this.limiter, (request: Request, response: Response) => {
             const code = request.query["code"] as string;
