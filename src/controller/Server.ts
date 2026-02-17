@@ -126,17 +126,19 @@ export default class Server {
             });
 
             this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+                controllerMicrosoft.logout();
+
                 Ca.removeCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
                 const bearerToken = helperSrc.headerBearerToken(request);
 
                 if (bearerToken) {
-                    delete this.userObject[bearerToken];
-
                     helperSrc.responseBody("ok", "", response, 200);
                 } else {
                     helperSrc.responseBody("", "ko", response, 500);
                 }
+
+                delete this.userObject[bearerToken];
             });
 
             this.app.get("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
