@@ -39,7 +39,9 @@ export default class LmStudio {
                         helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
                     })
                     .catch((error: Error) => {
-                        helperSrc.responseBody("", error, response, 500);
+                        helperSrc.writeLog("LmStudio.ts - api(/api/model) - catch()", error);
+
+                        helperSrc.responseBody("", "ko", response, 500);
                     });
             }
         });
@@ -48,81 +50,83 @@ export default class LmStudio {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const cookie = request.headers["cookie"] as string;
+                const cookie = request.headers["cookie"];
 
-                response.setHeader("Content-Type", "text/event-stream");
-                response.setHeader("Cache-Control", "no-cache");
-                response.setHeader("Connection", "keep-alive");
-                response.setHeader("X-Accel-Buffering", "no");
+                if (cookie) {
+                    response.setHeader("Content-Type", "text/event-stream");
+                    response.setHeader("Cache-Control", "no-cache");
+                    response.setHeader("Connection", "keep-alive");
+                    response.setHeader("X-Accel-Buffering", "no");
 
-                Cq.list.push(() => {
-                    return new Promise((resolve) => {
-                        request.on("close", () => {
-                            this.dataDone(response);
-
-                            resolve();
-
-                            return;
-                        });
-
-                        instance.api
-                            .stream(
-                                "/v1/responses",
-                                {
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        Cookie: cookie
-                                    }
-                                },
-                                request.body
-                            )
-                            .then(async (reader) => {
-                                const decoder = new TextDecoder("utf-8");
-                                let buffer = "";
-
-                                while (true) {
-                                    const { value, done } = await reader.read();
-
-                                    if (done) {
-                                        this.dataDone(response);
-
-                                        resolve();
-
-                                        return;
-                                    }
-
-                                    buffer += decoder.decode(value, { stream: true });
-                                    const lineList = buffer.split(/\r?\n/);
-                                    buffer = lineList.pop() || "";
-
-                                    for (const line of lineList) {
-                                        if (line.startsWith("data:")) {
-                                            const data = line.slice(5).trim();
-
-                                            if (data === "[DONE]") {
-                                                this.dataDone(response);
-
-                                                resolve();
-
-                                                return;
-                                            }
-
-                                            response.write(`data: ${data}\n\n`);
-                                        }
-                                    }
-                                }
-                            })
-                            .catch(() => {
+                    Cq.list.push(() => {
+                        return new Promise((resolve) => {
+                            request.on("close", () => {
                                 this.dataDone(response);
 
                                 resolve();
 
                                 return;
                             });
-                    });
-                });
 
-                Cq.processParallel(parseInt(helperSrc.QUEUE, 10));
+                            instance.api
+                                .stream(
+                                    "/v1/responses",
+                                    {
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            Cookie: cookie
+                                        }
+                                    },
+                                    request.body
+                                )
+                                .then(async (reader) => {
+                                    const decoder = new TextDecoder("utf-8");
+                                    let buffer = "";
+
+                                    while (true) {
+                                        const { value, done } = await reader.read();
+
+                                        if (done) {
+                                            this.dataDone(response);
+
+                                            resolve();
+
+                                            return;
+                                        }
+
+                                        buffer += decoder.decode(value, { stream: true });
+                                        const lineList = buffer.split(/\r?\n/);
+                                        buffer = lineList.pop() || "";
+
+                                        for (const line of lineList) {
+                                            if (line.startsWith("data:")) {
+                                                const data = line.slice(5).trim();
+
+                                                if (data === "[DONE]") {
+                                                    this.dataDone(response);
+
+                                                    resolve();
+
+                                                    return;
+                                                }
+
+                                                response.write(`data: ${data}\n\n`);
+                                            }
+                                        }
+                                    }
+                                })
+                                .catch(() => {
+                                    this.dataDone(response);
+
+                                    resolve();
+
+                                    return;
+                                });
+                        });
+                    });
+
+                    Cq.processParallel(parseInt(helperSrc.QUEUE));
+                }
             }
         });
     };
