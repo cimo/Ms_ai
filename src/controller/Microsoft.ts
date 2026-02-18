@@ -120,30 +120,40 @@ export default class Microsoft {
 
     api = (): void => {
         this.app.get("/ms-ai-redirect", this.limiter, (request: Request, response: Response) => {
-            const code = request.query["code"] as string;
-            const state = request.query["state"] as string;
+            const code = request.query["code"];
+            const state = request.query["state"];
 
-            this.codeToToken(code, state)
-                .then((result) => {
-                    this.userObject[result.bearerToken] = {
-                        ...this.userObject[result.bearerToken],
-                        username: result.username,
-                        accessToken: result.accessToken
-                    };
+            if (typeof code === "string" && typeof state === "string") {
+                this.codeToToken(code, state)
+                    .then((result) => {
+                        this.userObject[result.bearerToken] = {
+                            ...this.userObject[result.bearerToken],
+                            username: result.username,
+                            accessToken: result.accessToken
+                        };
 
-                    helperSrc.responseBody("ok", "", response, 200);
-                })
-                .catch(() => {
-                    helperSrc.responseBody("", "ko", response, 500);
-                });
+                        helperSrc.responseBody("ok", "", response, 200);
+                    })
+                    .catch((error: Error) => {
+                        helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - codeToToken() - catch()", error);
+
+                        helperSrc.responseBody("", "ko", response, 500);
+                    });
+            } else {
+                helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - Error", "Missing or invalid query parameters.");
+
+                helperSrc.responseBody("", "ko", response, 500);
+            }
         });
 
         this.app.get("/ms-ai-verify", this.limiter, (request: Request, response: Response) => {
-            const username = request.query["username"] as string;
+            const username = request.query["username"];
 
-            if (username in this.userObject) {
+            if (typeof username === "string" && username in this.userObject) {
                 helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
             } else {
+                helperSrc.writeLog("Microsoft.ts - api(/ms-ai-verify) - Error", "User not found or invalid.");
+
                 helperSrc.responseBody("", "ko", response, 500);
             }
         });
