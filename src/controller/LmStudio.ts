@@ -14,11 +14,6 @@ export default class LmStudio {
     private limiter: RateLimitRequestHandler;
 
     // Method
-    private dataDone = (response: Response): void => {
-        response.write("event: done\ndata: [DONE]\n\n");
-        response.end();
-    };
-
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
@@ -50,9 +45,11 @@ export default class LmStudio {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const cookie = request.headers["cookie"];
+                const cookieAi = request.headers["cookie"];
+                const cookieMcp = request.headers["x-cookie"];
+                const sessionId = request.headers["mcp-session-id"];
 
-                if (cookie) {
+                if (typeof cookieAi === "string" && typeof cookieMcp === "string" && typeof sessionId === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
                     response.setHeader("Cache-Control", "no-cache");
                     response.setHeader("Connection", "keep-alive");
@@ -61,8 +58,6 @@ export default class LmStudio {
                     Cq.list.push(() => {
                         return new Promise((resolve) => {
                             request.on("close", () => {
-                                this.dataDone(response);
-
                                 resolve();
 
                                 return;
@@ -74,7 +69,7 @@ export default class LmStudio {
                                     {
                                         headers: {
                                             "Content-Type": "application/json",
-                                            Cookie: cookie
+                                            Cookie: cookieAi
                                         }
                                     },
                                     request.body
@@ -82,12 +77,34 @@ export default class LmStudio {
                                 .then(async (reader) => {
                                     const decoder = new TextDecoder("utf-8");
                                     let buffer = "";
+                                    let resultData = "";
 
                                     while (true) {
                                         const { value, done } = await reader.read();
 
                                         if (done) {
-                                            this.dataDone(response);
+                                            const resultDataParse = JSON.parse(resultData);
+
+                                            if (resultDataParse.stepList) {
+                                                await fetch("https://localhost:1047/api/task", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Content-Type": "application/json",
+                                                        Cookie: cookieMcp,
+                                                        "mcp-session-id": sessionId
+                                                    },
+                                                    body: JSON.stringify(resultDataParse)
+                                                });
+
+                                                response.write(
+                                                    `data: ${JSON.stringify({
+                                                        type: "task_done",
+                                                        response: {
+                                                            message: "Task done."
+                                                        }
+                                                    })}\n\n`
+                                                );
+                                            }
 
                                             resolve();
 
@@ -102,12 +119,10 @@ export default class LmStudio {
                                             if (line.startsWith("data:")) {
                                                 const data = line.slice(5).trim();
 
-                                                if (data === "[DONE]") {
-                                                    this.dataDone(response);
+                                                const dataParse = JSON.parse(data);
 
-                                                    resolve();
-
-                                                    return;
+                                                if (dataParse.type === "response.output_item.done" && dataParse.output_index === 1) {
+                                                    resultData = dataParse.item.content[0].text.trim();
                                                 }
 
                                                 response.write(`data: ${data}\n\n`);
@@ -115,8 +130,8 @@ export default class LmStudio {
                                         }
                                     }
                                 })
-                                .catch(() => {
-                                    this.dataDone(response);
+                                .catch((error: Error) => {
+                                    helperSrc.writeLog("LmStudio.ts - api(/api/response) - catch()", error);
 
                                     resolve();
 
