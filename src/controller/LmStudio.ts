@@ -5,7 +5,8 @@ import { Cq } from "@cimo/queue/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
-import * as instance from "../Instance.js";
+import * as instanceEngine from "../InstanceEngine.js";
+import * as instanceMcp from "../InstanceMcp.js";
 import * as modelLmStudio from "../model/LmStudio.js";
 
 export default class LmStudio {
@@ -24,8 +25,8 @@ export default class LmStudio {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                instance.api
-                    .get<modelLmStudio.IresponseModel>("/v1/models", {
+                instanceEngine.api
+                    .get<modelLmStudio.IapiModel>("/v1/models", {
                         headers: {
                             "Content-Type": "application/json"
                         }
@@ -56,14 +57,14 @@ export default class LmStudio {
                     response.setHeader("X-Accel-Buffering", "no");
 
                     Cq.list.push(() => {
-                        return new Promise((resolve) => {
+                        return new Promise((resolve, reject) => {
                             request.on("close", () => {
                                 resolve();
 
                                 return;
                             });
 
-                            instance.api
+                            instanceEngine.api
                                 .stream(
                                     "/v1/responses",
                                     {
@@ -83,27 +84,50 @@ export default class LmStudio {
                                         const { value, done } = await reader.read();
 
                                         if (done) {
-                                            const resultDataParse = JSON.parse(resultData);
+                                            if (resultData !== "") {
+                                                const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolTask;
 
-                                            if (resultDataParse.stepList) {
-                                                await fetch("https://localhost:1047/api/task", {
-                                                    method: "POST",
-                                                    headers: {
-                                                        "Content-Type": "application/json",
-                                                        Cookie: cookieMcp,
-                                                        "mcp-session-id": sessionId
-                                                    },
-                                                    body: JSON.stringify(resultDataParse)
-                                                });
+                                                // eslint-disable-next-line no-console
+                                                console.log("resultDataParse", resultDataParse.stepList);
 
-                                                response.write(
-                                                    `data: ${JSON.stringify({
-                                                        type: "task_done",
-                                                        response: {
-                                                            message: "Task done."
-                                                        }
-                                                    })}\n\n`
-                                                );
+                                                await instanceMcp.api
+                                                    .post(
+                                                        "/api/tool-task",
+                                                        {
+                                                            headers: {
+                                                                "Content-Type": "application/json",
+                                                                Cookie: cookieMcp,
+                                                                "mcp-session-id": sessionId
+                                                            }
+                                                        },
+                                                        resultDataParse
+                                                    )
+                                                    .then(() => {
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "task_response",
+                                                                response: {
+                                                                    message: "Task done."
+                                                                }
+                                                            })}\n\n`
+                                                        );
+                                                    })
+                                                    .catch((error: Error) => {
+                                                        helperSrc.writeLog("LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()", error);
+
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "task_response",
+                                                                response: {
+                                                                    message: "Task fail!"
+                                                                }
+                                                            })}\n\n`
+                                                        );
+
+                                                        reject(error);
+
+                                                        return;
+                                                    });
                                             }
 
                                             resolve();
@@ -119,10 +143,18 @@ export default class LmStudio {
                                             if (line.startsWith("data:")) {
                                                 const data = line.slice(5).trim();
 
-                                                const dataParse = JSON.parse(data);
+                                                const dataTrim = data.trim();
 
-                                                if (dataParse.type === "response.output_item.done" && dataParse.output_index === 1) {
-                                                    resultData = dataParse.item.content[0].text.trim();
+                                                if (dataTrim.length > 1 && dataTrim[0] === "{" && dataTrim[dataTrim.length - 1] === "}") {
+                                                    const dataTrimParse = JSON.parse(dataTrim) as modelLmStudio.IapiResponse;
+
+                                                    if (dataTrimParse.type === "response.output_item.done" && dataTrimParse.output_index === 1) {
+                                                        const dataItem = dataTrimParse.item;
+
+                                                        if (dataItem) {
+                                                            resultData = dataItem.content[0].text.trim();
+                                                        }
+                                                    }
                                                 }
 
                                                 response.write(`data: ${data}\n\n`);
@@ -133,7 +165,7 @@ export default class LmStudio {
                                 .catch((error: Error) => {
                                     helperSrc.writeLog("LmStudio.ts - api(/api/response) - catch()", error);
 
-                                    resolve();
+                                    reject(error);
 
                                     return;
                                 });
