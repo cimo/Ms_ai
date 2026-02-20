@@ -84,11 +84,11 @@ export default class LmStudio {
                                         const { value, done } = await reader.read();
 
                                         if (done) {
-                                            if (resultData !== "") {
+                                            if (helperSrc.isJson(resultData)) {
                                                 const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolTask;
 
                                                 // eslint-disable-next-line no-console
-                                                console.log("resultDataParse", resultDataParse.stepList);
+                                                console.log("cimo", resultDataParse);
 
                                                 await instanceMcp.api
                                                     .post(
@@ -100,29 +100,29 @@ export default class LmStudio {
                                                                 "mcp-session-id": sessionId
                                                             }
                                                         },
-                                                        resultDataParse
+                                                        JSON.stringify(resultDataParse)
                                                     )
                                                     .then(() => {
-                                                        response.write(
+                                                        /*response.write(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
                                                                     message: "Task done."
                                                                 }
                                                             })}\n\n`
-                                                        );
+                                                        );*/
                                                     })
                                                     .catch((error: Error) => {
                                                         helperSrc.writeLog("LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()", error);
 
-                                                        response.write(
+                                                        /*response.write(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
                                                                     message: "Task fail!"
                                                                 }
                                                             })}\n\n`
-                                                        );
+                                                        );*/
 
                                                         reject(error);
 
