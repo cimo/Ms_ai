@@ -100,7 +100,7 @@ export default class LmStudio {
                                                         JSON.stringify(resultDataParse)
                                                     )
                                                     .then(() => {
-                                                        response.write(
+                                                        response.end(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
@@ -112,11 +112,11 @@ export default class LmStudio {
                                                     .catch((error: Error) => {
                                                         helperSrc.writeLog("LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()", error);
 
-                                                        response.write(
+                                                        response.end(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
-                                                                    message: "Task fail!"
+                                                                    message: "Task failed!"
                                                                 }
                                                             })}\n\n`
                                                         );
@@ -161,6 +161,15 @@ export default class LmStudio {
                                 })
                                 .catch((error: Error) => {
                                     helperSrc.writeLog("LmStudio.ts - api(/api/response) - catch()", error);
+
+                                    response.end(
+                                        `data: ${JSON.stringify({
+                                            type: "error",
+                                            error: {
+                                                message: error.message
+                                            }
+                                        })}\n\n`
+                                    );
 
                                     reject(error);
 
