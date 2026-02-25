@@ -173,5 +173,33 @@ export default class LmStudio {
                 }
             }
         });
+
+        this.app.post("/api/embedding", Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            const bearerToken = helperSrc.headerBearerToken(request);
+
+            if (bearerToken) {
+                instanceEngine.api
+                    .post<modelLmStudio.IapiEmbedding>(
+                        "/v1/embeddings",
+                        {
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        },
+                        {
+                            model: "text-embedding-nomic-embed-text-v1.5@q8_0",
+                            input: request.body.input
+                        }
+                    )
+                    .then((result) => {
+                        helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
+                    })
+                    .catch((error: Error) => {
+                        helperSrc.writeLog("LmStudio.ts - api(/api/embedding) - catch()", error);
+
+                        helperSrc.responseBody("", "ko", response, 500);
+                    });
+            }
+        });
     };
 }

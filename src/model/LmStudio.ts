@@ -32,3 +32,19 @@ export interface ItoolTask {
         }
     ];
 }
+
+interface IapiEmbeddingData {
+    object: string;
+    embedding: number[];
+    index: number;
+}
+
+export interface IapiEmbedding {
+    object: string;
+    data: IapiEmbeddingData[];
+    model: string;
+    usage: {
+        prompt_tokens: number;
+        total_tokens: number;
+    };
+}
