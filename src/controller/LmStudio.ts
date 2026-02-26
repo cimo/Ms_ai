@@ -35,7 +35,7 @@ export default class LmStudio {
                         helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
                     })
                     .catch((error: Error) => {
-                        helperSrc.writeLog("LmStudio.ts - api(/api/model) - catch()", error);
+                        helperSrc.writeLog("LmStudio.ts - api(/api/model) - catch()", error.message);
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
@@ -100,7 +100,7 @@ export default class LmStudio {
                                                         JSON.stringify(resultDataParse)
                                                     )
                                                     .then(() => {
-                                                        response.end(
+                                                        response.write(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
@@ -110,9 +110,12 @@ export default class LmStudio {
                                                         );
                                                     })
                                                     .catch((error: Error) => {
-                                                        helperSrc.writeLog("LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()", error);
+                                                        helperSrc.writeLog(
+                                                            "LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()",
+                                                            error.message
+                                                        );
 
-                                                        response.end(
+                                                        response.write(
                                                             `data: ${JSON.stringify({
                                                                 type: "task_response",
                                                                 response: {
@@ -121,11 +124,17 @@ export default class LmStudio {
                                                             })}\n\n`
                                                         );
 
-                                                        reject(error);
+                                                        reject(error.message);
 
                                                         return;
                                                     });
                                             }
+
+                                            response.end(
+                                                `data: ${JSON.stringify({
+                                                    type: "response.completed"
+                                                })}\n\n`
+                                            );
 
                                             resolve();
 
@@ -160,7 +169,7 @@ export default class LmStudio {
                                     }
                                 })
                                 .catch((error: Error) => {
-                                    helperSrc.writeLog("LmStudio.ts - api(/api/response) - catch()", error);
+                                    helperSrc.writeLog("LmStudio.ts - api(/api/response) - catch()", error.message);
 
                                     response.end(
                                         `data: ${JSON.stringify({
@@ -171,7 +180,7 @@ export default class LmStudio {
                                         })}\n\n`
                                     );
 
-                                    reject(error);
+                                    reject(error.message);
 
                                     return;
                                 });
@@ -196,7 +205,7 @@ export default class LmStudio {
                             }
                         },
                         {
-                            model: "text-embedding-nomic-embed-text-v1.5@q8_0",
+                            model: "text-embedding-embeddinggemma-300m",
                             input: request.body.input
                         }
                     )
@@ -204,7 +213,7 @@ export default class LmStudio {
                         helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
                     })
                     .catch((error: Error) => {
-                        helperSrc.writeLog("LmStudio.ts - api(/api/embedding) - catch()", error);
+                        helperSrc.writeLog("LmStudio.ts - api(/api/embedding) - catch()", error.message);
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
