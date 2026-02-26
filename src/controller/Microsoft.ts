@@ -135,7 +135,7 @@ export default class Microsoft {
                         helperSrc.responseBody("ok", "", response, 200);
                     })
                     .catch((error: Error) => {
-                        helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - codeToToken() - catch()", error);
+                        helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - codeToToken() - catch()", error.message);
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
