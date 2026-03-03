@@ -85,49 +85,107 @@ export default class LmStudio {
 
                                         if (done) {
                                             if (helperSrc.isJson(resultData)) {
-                                                const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolTask;
+                                                const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolCall | modelLmStudio.ItoolTask;
 
-                                                await instanceMcp.api
-                                                    .post(
-                                                        "/api/tool-task",
-                                                        {
-                                                            headers: {
-                                                                "Content-Type": "application/json",
-                                                                Cookie: cookieMcp,
-                                                                "mcp-session-id": sessionId
+                                                if ("name" in resultDataParse) {
+                                                    await instanceMcp.api
+                                                        .post(
+                                                            "/api/tool-call",
+                                                            {
+                                                                headers: {
+                                                                    "Content-Type": "application/json",
+                                                                    Cookie: cookieMcp,
+                                                                    "mcp-session-id": sessionId
+                                                                }
+                                                            },
+                                                            {
+                                                                jsonrpc: "2.0",
+                                                                id: 1,
+                                                                method: "tools/call",
+                                                                params: {
+                                                                    name: resultDataParse.name,
+                                                                    arguments: resultDataParse.argumentObject,
+                                                                    protocolVersion: "2025-06-18",
+                                                                    capabilities: {},
+                                                                    clientInfo: {
+                                                                        name: "curl",
+                                                                        version: "1.0"
+                                                                    }
+                                                                }
                                                             }
-                                                        },
-                                                        JSON.stringify(resultDataParse)
-                                                    )
-                                                    .then(() => {
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "task_response",
-                                                                response: {
-                                                                    message: "Task done."
+                                                        )
+                                                        .then(() => {
+                                                            response.write(
+                                                                `data: ${JSON.stringify({
+                                                                    type: "tool_response",
+                                                                    response: {
+                                                                        message: "Call done."
+                                                                    }
+                                                                })}\n\n`
+                                                            );
+                                                        })
+                                                        .catch((error: Error) => {
+                                                            helperSrc.writeLog(
+                                                                "LmStudio.ts - api(/api/response) - api(/api/tool-call) - catch()",
+                                                                error.message
+                                                            );
+
+                                                            response.write(
+                                                                `data: ${JSON.stringify({
+                                                                    type: "tool_response",
+                                                                    response: {
+                                                                        message: "Call failed!"
+                                                                    }
+                                                                })}\n\n`
+                                                            );
+
+                                                            reject(new Error(error.message));
+
+                                                            return;
+                                                        });
+                                                } else if ("list" in resultDataParse) {
+                                                    await instanceMcp.api
+                                                        .post(
+                                                            "/api/tool-task",
+                                                            {
+                                                                headers: {
+                                                                    "Content-Type": "application/json",
+                                                                    Cookie: cookieMcp,
+                                                                    "mcp-session-id": sessionId
                                                                 }
-                                                            })}\n\n`
-                                                        );
-                                                    })
-                                                    .catch((error: Error) => {
-                                                        helperSrc.writeLog(
-                                                            "LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()",
-                                                            error.message
-                                                        );
+                                                            },
+                                                            JSON.stringify(resultDataParse)
+                                                        )
+                                                        .then(() => {
+                                                            response.write(
+                                                                `data: ${JSON.stringify({
+                                                                    type: "tool_response",
+                                                                    response: {
+                                                                        message: "Task done."
+                                                                    }
+                                                                })}\n\n`
+                                                            );
+                                                        })
+                                                        .catch((error: Error) => {
+                                                            helperSrc.writeLog(
+                                                                "LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()",
+                                                                error.message
+                                                            );
 
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "task_response",
-                                                                response: {
-                                                                    message: "Task failed!"
-                                                                }
-                                                            })}\n\n`
-                                                        );
+                                                            response.write(
+                                                                `data: ${JSON.stringify({
+                                                                    type: "tool_response",
+                                                                    response: {
+                                                                        message: "Task failed!"
+                                                                    }
+                                                                })}\n\n`
+                                                            );
 
-                                                        reject(error.message);
+                                                            reject(new Error(error.message));
 
-                                                        return;
-                                                    });
+                                                            return;
+                                                        });
+                                                }
                                             }
 
                                             response.end(
@@ -180,7 +238,7 @@ export default class LmStudio {
                                         })}\n\n`
                                     );
 
-                                    reject(error.message);
+                                    reject(new Error(error.message));
 
                                     return;
                                 });
