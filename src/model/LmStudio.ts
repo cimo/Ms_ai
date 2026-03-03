@@ -24,13 +24,13 @@ export interface IapiResponse {
     item: IapiResponseItem;
 }
 
+export interface ItoolCall {
+    name: string;
+    argumentObject: Record<string, string>;
+}
+
 export interface ItoolTask {
-    stepList: [
-        {
-            action: string;
-            argumentObject: Record<string, string>;
-        }
-    ];
+    list: ItoolCall[];
 }
 
 interface IapiEmbeddingData {
