@@ -9,7 +9,7 @@ export interface IapiModel {
     object: string;
 }
 
-export interface IapiResponseItem {
+interface IapiResponseItem {
     content: [
         {
             type: string;
@@ -20,17 +20,9 @@ export interface IapiResponseItem {
 
 export interface IapiResponse {
     type: string;
-    output_index: number;
-    item: IapiResponseItem;
-}
-
-export interface ItoolCall {
-    name: string;
-    argumentObject: Record<string, string>;
-}
-
-export interface ItoolTask {
-    list: ItoolCall[];
+    response: {
+        output: IapiResponseItem[];
+    };
 }
 
 interface IapiEmbeddingData {
@@ -47,4 +39,17 @@ export interface IapiEmbedding {
         prompt_tokens: number;
         total_tokens: number;
     };
+}
+
+export interface IapiToolCall {
+    result: IapiResponseItem;
+}
+
+export interface ItoolCall {
+    name: string;
+    argumentObject: Record<string, string>;
+}
+
+export interface ItoolTask {
+    list: ItoolCall[];
 }
