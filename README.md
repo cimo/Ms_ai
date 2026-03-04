@@ -14,7 +14,7 @@ It's possible to use a custom certificate instead of "Ms_cronjob", just add it t
 
 ## Microsoft AD
 
-1. Create a file "microsoft.env" in "env" folder and add:
+1. Create "microsoft.env" file in "env" folder and add:
 ```
 MS_AI_AD_URL_LOGIN=''
 MS_AI_AD_URL_REDIRECT=''
