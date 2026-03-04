@@ -2,7 +2,7 @@
 
 p1=$(printf '%s' "${1}" | xargs)
 
-if [ "$#" -lt 1]
+if [ "$#" -lt 1 ]
 then
     echo "lm_studio.sh - Missing parameter."
 
@@ -19,6 +19,32 @@ pathLmStudio="/home/squashfs-root/lm-studio"
 pathLms="${PATH_ROOT}.lmstudio/bin/lms"
 pathBackend="${PATH_ROOT}.lmstudio/extensions/backends/"
 pathBackendVendor="${PATH_ROOT}.lmstudio/extensions/backends/vendor/"
+pathDownloadModel="${PATH_ROOT}.lmstudio/download/"
+
+waitForModel() {
+    local needle="${1}"
+    local timeout=60
+    local start end
+
+    start=$(date +%s)
+    end=$((start + timeout))
+
+    echo "Waiting for model: ${1}"
+
+    while ! "${pathLms}" ls 2>/dev/null | grep -iFq "${1}"
+    do
+        if [ "$(date +%s)" -ge "${end}" ]; then
+            echo "Timeout reached for model: ${1}"
+
+            return 1
+        fi
+
+        sleep 3
+    done
+
+    return 0
+}
+
 
 if [ "${parameter1}" = "gui" ]
 then
@@ -60,57 +86,45 @@ read -r -a modelList <<< "$(printf '%s' "${MS_AI_MODEL}" | tr -d '[]" ' | tr ','
 
 for model in "${modelList[@]}"
 do
+    mkdir -p "${pathDownloadModel}"
+
     echo "Model: ${model}"
 
-    download=$(curl -s ${MS_AI_URL_ENGINE}/api/v1/models/download -H "Content-Type: application/json" -d "{\"model\": \"https://huggingface.co/${model}\", \"quantization\": \"Q8_0\"}")
+    download=$(curl -fsSL --retry 3 -o "${pathDownloadModel}${model}.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/${model}-Q8_0.gguf?download=true")
 
-    jobId=$(echo ${download} | jq -r '.job_id')
-
-    echo "Job ID: ${jobId}"
-
-    if [ -n "${jobId}" ] && [ "${jobId}" != "null" ]
+    if [ "${model}" = "Qwen3.5-0.8B" ]
     then
-        status="start"
+        echo "Model: mmproj-BF16"
 
-        while [ "${status}" != "completed" ]
-        do
-            sleep 3
-
-            status=$(curl -s ${MS_AI_URL_ENGINE}/api/v1/models/download/status/${jobId} | jq -r '.status')
-
-            echo "Status: ${status}"
-
-            if [ -z "${status}" ] || [ "${status}" = "null" ]
-            then
-                break
-            fi
-        done
-    fi
-
-    modelIdentifierFolder=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||')
-
-    echo "Model folder: ${modelIdentifierFolder}"
-
-    pathModel="${PATH_ROOT}.lmstudio/models/${model}/${modelIdentifierFolder}-Q8_0.gguf"
-
-    while [ ! -f "${pathModel}" ]
-    do
-        sleep 3
-
-        if [ -z "${jobId}" ] || [ "${jobId}" = "null" ]
-        then
-            break
-        fi
-    done
-
-    if [ -f "${pathModel}" ]
-    then
-        sleep 3
-        
-        modelIdentifier=$(echo "${model}" | sed 's/-GGUF//g' | sed 's|.*/||' | tr '[:upper:]' '[:lower:]')
-        
-        curl -s ${MS_AI_URL_ENGINE}/api/v1/models/load -H "Content-Type: application/json" -d "{\"model\": \"${modelIdentifier}\"}"
-
-        echo ""
+        downloadSub=$(curl -fsSL --retry 3 -o "${pathDownloadModel}mmproj-BF16.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/mmproj-BF16.gguf?download=true")
     fi
 done
+
+for model in "${pathDownloadModel}"*.gguf
+do
+    sleep 3
+
+    name="$(basename "${model}" .gguf)"
+
+    if [[ "${name}" == *mmproj* ]]
+    then
+        continue
+    fi
+
+    echo "Import: ${name}"
+    
+    if [ "${name}" = "Qwen3.5-0.8B" ]
+    then
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}"
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${pathDownloadModel}mmproj-BF16.gguf"
+    else
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}"
+    fi
+done
+
+if waitForModel "qwen3.5-0.8b"
+then
+    "${pathLms}" load "qwen3.5-0.8b"
+fi
+
+

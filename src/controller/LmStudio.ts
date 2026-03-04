@@ -5,9 +5,10 @@ import { Cq } from "@cimo/queue/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
+import * as modelHelperSrc from "../model/HelperSrc.js";
+import * as modelLmStudio from "../model/LmStudio.js";
 import * as instanceEngine from "../InstanceEngine.js";
 import * as instanceMcp from "../InstanceMcp.js";
-import * as modelLmStudio from "../model/LmStudio.js";
 
 export default class LmStudio {
     // Variable
@@ -89,7 +90,7 @@ export default class LmStudio {
 
                                                 if ("name" in resultDataParse) {
                                                     await instanceMcp.api
-                                                        .post(
+                                                        .post<modelHelperSrc.IresponseBody>(
                                                             "/api/tool-call",
                                                             {
                                                                 headers: {
@@ -114,12 +115,14 @@ export default class LmStudio {
                                                                 }
                                                             }
                                                         )
-                                                        .then(() => {
+                                                        .then((result) => {
+                                                            const stdout = result.response.stdout as unknown as modelLmStudio.IapiToolCall;
+
                                                             response.write(
                                                                 `data: ${JSON.stringify({
                                                                     type: "tool_response",
                                                                     response: {
-                                                                        message: "Call done."
+                                                                        message: stdout.result.content[0].text
                                                                     }
                                                                 })}\n\n`
                                                             );
@@ -134,7 +137,7 @@ export default class LmStudio {
                                                                 `data: ${JSON.stringify({
                                                                     type: "tool_response",
                                                                     response: {
-                                                                        message: "Call failed!"
+                                                                        message: error.message
                                                                     }
                                                                 })}\n\n`
                                                             );
@@ -145,7 +148,7 @@ export default class LmStudio {
                                                         });
                                                 } else if ("list" in resultDataParse) {
                                                     await instanceMcp.api
-                                                        .post(
+                                                        .post<modelHelperSrc.IresponseBody>(
                                                             "/api/tool-task",
                                                             {
                                                                 headers: {
@@ -156,12 +159,14 @@ export default class LmStudio {
                                                             },
                                                             JSON.stringify(resultDataParse)
                                                         )
-                                                        .then(() => {
+                                                        .then((result) => {
+                                                            const stdout = result.response.stdout as unknown as modelLmStudio.IapiToolCall;
+
                                                             response.write(
                                                                 `data: ${JSON.stringify({
                                                                     type: "tool_response",
                                                                     response: {
-                                                                        message: "Task done."
+                                                                        message: stdout
                                                                     }
                                                                 })}\n\n`
                                                             );
@@ -176,7 +181,7 @@ export default class LmStudio {
                                                                 `data: ${JSON.stringify({
                                                                     type: "tool_response",
                                                                     response: {
-                                                                        message: "Task failed!"
+                                                                        message: error.message
                                                                     }
                                                                 })}\n\n`
                                                             );
@@ -212,11 +217,11 @@ export default class LmStudio {
                                                 if (dataTrim.length > 1 && dataTrim[0] === "{" && dataTrim[dataTrim.length - 1] === "}") {
                                                     const dataTrimParse = JSON.parse(dataTrim) as modelLmStudio.IapiResponse;
 
-                                                    if (dataTrimParse.type === "response.output_item.done" && dataTrimParse.output_index === 1) {
-                                                        const dataItem = dataTrimParse.item;
+                                                    if (dataTrimParse.type === "response.completed") {
+                                                        const dataItem = dataTrimParse.response.output[0].content[0].text;
 
                                                         if (dataItem) {
-                                                            resultData = dataItem.content[0].text.trim();
+                                                            resultData = dataItem.trim();
                                                         }
                                                     }
                                                 }
