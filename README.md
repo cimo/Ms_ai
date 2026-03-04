@@ -12,7 +12,7 @@ It's possible to use a custom certificate instead of "Ms_cronjob", just add it t
 -   WSLg for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
 -   LM studio
 
-## Microsoft
+## Microsoft AD
 
 1. Create a file "microsoft.env" in "env" folder and add:
 ```
