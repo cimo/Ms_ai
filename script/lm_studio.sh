@@ -94,7 +94,7 @@ do
 
     if [ "${model}" = "Qwen3.5-0.8B" ]
     then
-        echo "Model: mmproj-BF16"
+        echo "Download: mmproj-BF16"
 
         downloadSub=$(curl -fsSL --retry 3 -o "${pathDownloadModel}mmproj-BF16.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/mmproj-BF16.gguf?download=true")
     fi
