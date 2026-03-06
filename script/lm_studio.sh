@@ -88,7 +88,7 @@ for model in "${modelList[@]}"
 do
     mkdir -p "${pathDownloadModel}"
 
-    echo "Model: ${model}"
+    echo "Download: ${model}"
 
     download=$(curl -fsSL --retry 3 -o "${pathDownloadModel}${model}.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/${model}-Q8_0.gguf?download=true")
 
