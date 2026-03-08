@@ -126,5 +126,3 @@ if waitForModel "qwen3.5-0.8b"
 then
     "${pathLms}" load "qwen3.5-0.8b"
 fi
-
-
