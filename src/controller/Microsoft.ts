@@ -115,7 +115,7 @@ export default class Microsoft {
     };
 
     logout = (): void => {
-        // Remove ad session...
+        // Delete ad session...
     };
 
     api = (): void => {
