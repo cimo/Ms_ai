@@ -27,6 +27,7 @@ pnpm-debug.log*
 .lmstudio
 .local
 .npm
+.npmrc
 .nv
 .pki
 certificate/**/*
