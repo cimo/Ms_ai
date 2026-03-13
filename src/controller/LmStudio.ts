@@ -86,7 +86,7 @@ export default class LmStudio {
 
                                         if (done) {
                                             if (helperSrc.isJson(resultData)) {
-                                                const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolCall | modelLmStudio.ItoolTask;
+                                                const resultDataParse = JSON.parse(resultData) as modelLmStudio.ItoolCall | modelLmStudio.ItaskCall;
 
                                                 if ("name" in resultDataParse) {
                                                     await instanceMcp.api
@@ -149,7 +149,7 @@ export default class LmStudio {
                                                 } else if ("list" in resultDataParse) {
                                                     await instanceMcp.api
                                                         .post<modelHelperSrc.IresponseBody>(
-                                                            "/api/tool-task",
+                                                            "/api/task-call",
                                                             {
                                                                 headers: {
                                                                     "Content-Type": "application/json",
@@ -160,7 +160,7 @@ export default class LmStudio {
                                                             JSON.stringify(resultDataParse)
                                                         )
                                                         .then((result) => {
-                                                            const stdout = result.response.stdout as unknown as modelLmStudio.IapiToolCall;
+                                                            const stdout = result.response.stdout;
 
                                                             response.write(
                                                                 `data: ${JSON.stringify({
@@ -173,7 +173,7 @@ export default class LmStudio {
                                                         })
                                                         .catch((error: Error) => {
                                                             helperSrc.writeLog(
-                                                                "LmStudio.ts - api(/api/response) - api(/api/tool-task) - catch()",
+                                                                "LmStudio.ts - api(/api/response) - api(/api/task-call) - catch()",
                                                                 error.message
                                                             );
 
