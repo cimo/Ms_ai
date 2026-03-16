@@ -27,7 +27,7 @@ export default class LmStudio {
 
             if (bearerToken) {
                 instanceEngine.api
-                    .get<modelLmStudio.IapiModel>("/v1/models", {
+                    .get("/v1/models", {
                         headers: {
                             "Content-Type": "application/json"
                         }
@@ -116,7 +116,7 @@ export default class LmStudio {
                                                             }
                                                         )
                                                         .then((result) => {
-                                                            const stdout = result.response.stdout as unknown as modelLmStudio.IapiToolCall;
+                                                            const stdout = result.data.response.stdout as unknown as modelLmStudio.IapiToolCall;
 
                                                             response.write(
                                                                 `data: ${JSON.stringify({
@@ -160,7 +160,7 @@ export default class LmStudio {
                                                             JSON.stringify(resultDataParse)
                                                         )
                                                         .then((result) => {
-                                                            const stdout = result.response.stdout;
+                                                            const stdout = result.data.response.stdout;
 
                                                             response.write(
                                                                 `data: ${JSON.stringify({
@@ -260,7 +260,7 @@ export default class LmStudio {
 
             if (bearerToken) {
                 instanceEngine.api
-                    .post<modelLmStudio.IapiEmbedding>(
+                    .post(
                         "/v1/embeddings",
                         {
                             headers: {
