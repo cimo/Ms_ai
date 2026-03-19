@@ -35,6 +35,8 @@ export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.e
 export const MODEL = Ce.checkVariable("MS_AI_MODEL") || (process.env["MS_AI_MODEL"] as string);
 export const QUEUE = Ce.checkVariable("MS_AI_QUEUE") || (process.env["MS_AI_QUEUE"] as string);
 
+Ce.loadFile(`./env/${ENV_NAME}.secret.env`);
+
 export const localeConfiguration: Record<string, { locale: string; currency: string; dateFormat: string }> = {
     // Asia
     jp: { locale: "ja-JP", currency: "JPY", dateFormat: "a" },

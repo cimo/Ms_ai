@@ -9,14 +9,19 @@ import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import * as modelMicrosoft from "../model/Microsoft.js";
 
-Ce.loadFile("./env/microsoft.env");
+export const ENV_NAME = Ce.checkVariable("ENV_NAME") || (process.env["ENV_NAME"] as string);
+
+Ce.loadFile(`./env/${ENV_NAME}.microsoft.env`);
 
 export const AD_URL_LOGIN = Ce.checkVariable("MS_AI_AD_URL_LOGIN") || (process.env["MS_AI_URL_AD_LOGIN"] as string);
 export const AD_URL_REDIRECT = Ce.checkVariable("MS_AI_AD_URL_REDIRECT") || (process.env["MS_AI_URL_AD_REDIRECT"] as string);
 export const AD_SCOPE = Ce.checkVariable("MS_AI_AD_SCOPE") || (process.env["MS_AI_AD_SCOPE"] as string);
+
+Ce.loadFile(`./env/${ENV_NAME}.secret.microsoft.env`);
+
 export const AD_TENANT = Ce.checkVariable("MS_AI_AD_TENANT");
 export const AD_CLIENT = Ce.checkVariable("MS_AI_AD_CLIENT");
-export const AD_CLIENT_SECRET = Ce.checkVariable("MS_AI_AD_CLIENT_SECRET");
+export const AD_CLIENT_KEY = Ce.checkVariable("MS_AI_AD_CLIENT_KEY");
 
 export default class Microsoft {
     // Variable
@@ -46,7 +51,7 @@ export default class Microsoft {
     private configurationObject: Configuration = {
         auth: {
             clientId: AD_CLIENT,
-            clientSecret: AD_CLIENT_SECRET,
+            clientSecret: AD_CLIENT_KEY,
             authority: `${AD_URL_LOGIN}/${AD_TENANT}`
         }
     };
@@ -60,7 +65,7 @@ export default class Microsoft {
     loginWithAuthenticationCode = async (bearerToken: string): Promise<string> => {
         let result = "";
 
-        if (AD_URL_LOGIN && AD_URL_REDIRECT && AD_SCOPE && AD_TENANT && AD_CLIENT && AD_CLIENT_SECRET) {
+        if (AD_URL_LOGIN && AD_URL_REDIRECT && AD_SCOPE && AD_TENANT && AD_CLIENT && AD_CLIENT_KEY) {
             const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
 
             const parameterObject: AuthorizationUrlRequest = {
@@ -76,7 +81,7 @@ export default class Microsoft {
 
             result = await cca.getAuthCodeUrl(parameterObject);
         } else {
-            result = "Warning: Configure 'microsoft.env' file.";
+            result = `Warning: Configure '${ENV_NAME}.microsoft.env' and '${ENV_NAME}.secret.microsoft.env' file.`;
         }
 
         return result;
