@@ -35,7 +35,7 @@ certificate/**/*
 !certificate/**/
 !certificate/**/.gitkeep
 dist
-env/microsoft.env
+env/*.secret.*
 log/*
 !log/.gitkeep
 node_modules
