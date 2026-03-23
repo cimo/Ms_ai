@@ -12,18 +12,6 @@ It's possible to use a custom certificate instead of "Ms_cronjob", just add it t
 -   WSLg for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
 -   LM studio
 
-## Secret env
-
-1. Create "local.secret.env" file in the "env" folder and add the secret variable there when needed.
-
-2. Create "local.secret.microsoft.env" file in "env" folder and add:
-
-```
-MS_AI_AD_TENANT=''
-MS_AI_AD_CLIENT=''
-MS_AI_AD_CLIENT_KEY=''
-```
-
 ## Installation
 
 1. For build and up with GPU write on terminal:
