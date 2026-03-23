@@ -100,6 +100,7 @@ RUN cd ~ \
     libwayland-egl1 \
     libwayland-cursor0 \
     libgomp1 \
+    libatomic1 \
     xdg-utils \
     # LM studio
     && apt-get update && apt-get install -y \
