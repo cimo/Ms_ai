@@ -47,11 +47,10 @@ waitForModel() {
     return 0
 }
 
-
 if [ "${parameter1}" = "gui" ]
 then
-    pkill -f "${pathLmStudio}"
-    pkill -f "${pathLms}"
+    pkill -f "${pathLmStudio}" || true
+    pkill -f "${pathLms}" || true
 
     "${pathLmStudio}" --no-sandbox --disable-dev-shm-usage >> "${PATH_ROOT}${MS_AI_PATH_LOG}lm_studio.log" 2>&1 &
 else
@@ -92,13 +91,23 @@ do
 
     echo "Download: ${model}"
 
-    download=$(curl -fsSL --retry 3 -o "${pathDownloadModel}${model}.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/${model}-Q8_0.gguf?download=true")
+    if ! curl -fsSL --retry 3 -o "${pathDownloadModel}${model}.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/${model}-Q8_0.gguf?download=true"
+    then
+        echo "Skip ${model}: download failed."
+
+        continue
+    fi
 
     if [ "${model}" = "Qwen3.5-0.8B" ]
     then
         echo "Download: mmproj-BF16"
 
-        downloadSub=$(curl -fsSL --retry 3 -o "${pathDownloadModel}mmproj-BF16.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/mmproj-BF16.gguf?download=true")
+        if ! curl -fsSL --retry 3 -o "${pathDownloadModel}mmproj-BF16.gguf" "https://huggingface.co/unsloth/${model}-GGUF/resolve/main/mmproj-BF16.gguf?download=true"
+        then
+            echo "Skip mmproj-BF16: download failed."
+
+            continue
+        fi
     fi
 done
 
@@ -117,10 +126,10 @@ do
     
     if [ "${name}" = "Qwen3.5-0.8B" ]
     then
-        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}"
-        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${pathDownloadModel}mmproj-BF16.gguf"
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}" || true
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${pathDownloadModel}mmproj-BF16.gguf" || true
     else
-        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}"
+        "${pathLms}" import -y --copy --user-repo "unsloth/${name}-GGUF" "${model}" || true
     fi
 done
 
