@@ -25,7 +25,6 @@ pnpm-debug.log*
 .cache
 .config
 .cuda
-.lmstudio
 .local
 .npm
 .npmrc
@@ -35,6 +34,9 @@ certificate/**/*
 !certificate/**/
 !certificate/**/.gitkeep
 dist
+llamaCpp/model/*
+!llamaCpp/.gitkeep
+!llamaCpp/preset.ini.template
 log/*
 !log/.gitkeep
 node_modules
@@ -45,5 +47,4 @@ public/asset/js/*
 public/asset/style/*
 !public/asset/style/.gitkeep
 public/index.html
-.lmstudio-home-pointer
 package-lock.json
