@@ -1,0 +1,45 @@
+version = 1
+
+[*]
+host = ${urlEngineHost}
+port = ${urlEnginePort}
+ssl-key-file = ${MS_AI_PATH_CERTIFICATE_KEY}
+ssl-cert-file = ${MS_AI_PATH_CERTIFICATE_CRT}
+models-max = 2
+models-autoload = on
+no-webui = true
+ctx-size = 8192
+temp = 0
+top-k = 20
+top-p = 0.95
+min-p = 0
+repeat-penalty = 1
+presence-penalty = 0
+repeat-last-n = 0
+frequency-penalty = 0
+n-predict = 4096
+threads = 5
+batch-size = 2048
+ubatch-size = 1024
+parallel = 3
+kv-offload = true
+kv-unified = true
+mlock = true
+mmap = true
+seed = -1
+cache-type-k = q8_0
+cache-type-v = q8_0
+n-gpu-layers = 999
+flash-attn = on
+
+[Qwen3-Embedding-0.6B-F16]
+model = ${pathEngineModel}Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-F16.gguf
+embedding = true
+pooling = last
+
+[Qwen3.5-0.8B-BF16]
+model = ${pathEngineModel}unsloth/Qwen3.5-0.8B-GGUF/Qwen3.5-0.8B-BF16.gguf
+mmproj = ${pathEngineModel}unsloth/Qwen3.5-0.8B-GGUF/mmproj-BF16.gguf
+image-max-tokens = 8192
+jinja = true
+reasoning = off

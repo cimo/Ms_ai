@@ -35,8 +35,8 @@ certificate/**/*
 !certificate/**/.gitkeep
 dist
 llamaCpp/model/*
-!llamaCpp/.gitkeep
-!llamaCpp/preset.ini.template
+!llamaCpp/model/.gitkeep
+!llamaCpp/model/preset.ini.template
 log/*
 !log/.gitkeep
 node_modules
