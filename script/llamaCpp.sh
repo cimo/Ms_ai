@@ -3,8 +3,8 @@
 set -euo pipefail
 
 urlEngine="${MS_AI_URL_ENGINE#*://}"
-export urlEngineHost="${urlEngine%%:*}"
-export urlEnginePort="${urlEngine##*:}"
+urlEngineHost="${urlEngine%%:*}"
+urlEnginePort="${urlEngine##*:}"
 export pathEngineModel=${PATH_ROOT}${MS_AI_PATH_ENGINE_MODEL}
 
 mkdir -p "${pathEngineModel}"
@@ -53,6 +53,27 @@ then
 fi
 
 # Engine
-envsubst '${MS_AI_PATH_CERTIFICATE_KEY},${MS_AI_PATH_CERTIFICATE_CRT},${urlEngineHost},${urlEnginePort},${pathEngineModel}' < "${pathEngineModel}preset.ini.template" > "${pathEngineModel}preset.ini"
+envsubst '${pathEngineModel}' < "${pathEngineModel}preset_local_${DEVICE}.ini.template" > "${pathEngineModel}preset.ini"
 
-"${PATH_ROOT}llamaCpp/build-${DEVICE}/llama-server" --models-preset "${pathEngineModel}preset.ini" &
+"${PATH_ROOT}llamaCpp/build-${DEVICE}/llama-server" \
+--host ${urlEngineHost} \
+--port ${urlEnginePort} \
+--ssl-key-file ${MS_AI_PATH_CERTIFICATE_KEY} \
+--ssl-cert-file ${MS_AI_PATH_CERTIFICATE_CRT} \
+--models-max 2 \
+--no-webui \
+--threads 2 \
+--models-preset "${pathEngineModel}preset.ini" >> "${PATH_ROOT}${MS_AI_PATH_LOG}llamaCpp.log" 2>&1 &
+
+tail -f "${PATH_ROOT}${MS_AI_PATH_LOG}llamaCpp.log" > /dev/null 2>&1 &
+
+until curl -fsSL "${MS_AI_URL_ENGINE}/health" > /dev/null 2>&1
+do
+    sleep 3
+done
+
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3-Embedding-0.6B-F16"}' > /dev/null 2>&1
+
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-0.8B-BF16"}' > /dev/null 2>&1
+
+echo "Engine ready."
