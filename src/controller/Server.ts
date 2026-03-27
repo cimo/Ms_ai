@@ -11,7 +11,7 @@ import { Cc } from "@cimo/cronjob/dist/src/Main.js";
 // Source
 import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
-import ControllerLmStudio from "./LmStudio.js";
+import ControllerLlamaCpp from "./LlamaCpp.js";
 import ControllerMicrosoft from "./Microsoft.js";
 
 export default class Server {
@@ -91,8 +91,8 @@ export default class Server {
         const server = creation;
 
         server.listen(helperSrc.SERVER_PORT, () => {
-            const controllerLmStudio = new ControllerLmStudio(this.app, this.limiter);
-            controllerLmStudio.api();
+            const controllerLlamaCpp = new ControllerLlamaCpp(this.app, this.limiter);
+            controllerLlamaCpp.api();
 
             const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
             controllerMicrosoft.api();

@@ -10,7 +10,7 @@ It's possible to use a custom certificate instead of "Ms_cronjob", just add it t
 
 -   Cross platform (Windows, Linux)
 -   WSLg for WSL2 (Run linux GUI app directly in windows) with full nvidia GPU host support.
--   LM studio
+-   LlamaCpp
 
 ## Installation
 
@@ -45,22 +45,12 @@ NVIDIA GeForce RTX 3060 - (Host GPU available)
     - .cache
     - .config
     - .cuda
-    - .lmstudio
     - .local
     - .npm
     - .nv
     - .pki
     - dist
     - node_modules
-    - .lmstudio-home-pointer
     - package-lock.json
 
 2. Follow the "Installation" instructions.
-
-## Command
-
-1. For execute "LM studio" GUI write on terminal:
-
-    ```
-    bash script/lm_studio.sh "gui"
-    ```

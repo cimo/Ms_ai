@@ -30,9 +30,9 @@ export const PATH_FILE = Ce.checkVariable("MS_AI_PATH_FILE");
 export const PATH_LOG = Ce.checkVariable("MS_AI_PATH_LOG");
 export const PATH_PUBLIC = Ce.checkVariable("MS_AI_PATH_PUBLIC");
 export const PATH_SCRIPT = Ce.checkVariable("MS_AI_PATH_SCRIPT");
+export const PATH_ENGINE_MODEL = Ce.checkVariable("MS_AI_PATH_ENGINE_MODEL");
 export const MIME_TYPE = Ce.checkVariable("MS_AI_MIME_TYPE") || (process.env["MS_AI_MIME_TYPE"] as string);
 export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.env["MS_AI_FILE_SIZE_MB"] as string);
-export const MODEL = Ce.checkVariable("MS_AI_MODEL") || (process.env["MS_AI_MODEL"] as string);
 export const QUEUE = Ce.checkVariable("MS_AI_QUEUE") || (process.env["MS_AI_QUEUE"] as string);
 
 Ce.loadFile(`./env/${ENV_NAME}.secret.env`);

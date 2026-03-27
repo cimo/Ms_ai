@@ -7,6 +7,7 @@ ARG _LANG
 ARG _SERVER_PORT
 ARG _PATH_ROOT
 ARG _PATH_CERTIFICATE_PEM
+ARG _DEVICE
 ARG _VERSION_TAG
 
 ENV ENV_NAME=${_ENV_NAME}
@@ -16,6 +17,7 @@ ENV LANG=${_LANG}
 ENV SERVER_PORT=${_SERVER_PORT}
 ENV PATH_ROOT=${_PATH_ROOT}
 ENV PATH_CERTIFICATE_PEM=${_PATH_CERTIFICATE_PEM}
+ENV DEVICE=${_DEVICE}
 ENV VERSION_TAG=${_VERSION_TAG}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,6 +37,7 @@ ENV EGL_PLATFORM=wayland
 ENV ANGLE_DEFAULT_PLATFORM=egl
 ENV DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}bus"
 ENV PULSE_SERVER="unix:/mnt/wslg/PulseServer"
+ENV LD_LIBRARY_PATH="${PATH_ROOT}llamaCpp/build-${DEVICE}/"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
@@ -59,7 +62,7 @@ RUN cd ~ \
     && echo 'Acquire::https::No-Cache "true";' >> /etc/apt/apt.conf.d/99no-cache \
     && VERSION_CODENAME=$(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) \
     && chmod -R 0644 /usr/local/share/ca-certificates/ \
-    && apt-get update && apt-get install -y ca-certificates tzdata curl media-types jq \
+    && apt-get update && apt-get install -y ca-certificates tzdata curl media-types jq gettext-base lynx \
     && update-ca-certificates \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone \
     && echo "application/typescript ts" >> /etc/mime.types \
@@ -105,14 +108,9 @@ RUN cd ~ \
     libgomp1 \
     libatomic1 \
     xdg-utils \
-    # LM studio
+    # LlamaCpp
     && apt-get update && apt-get install -y \
-    && curl -fsSL "https://lmstudio.ai/download/latest/linux/x64" -o "/home/lm_studio.AppImage" \
-    && cd /home/ \
-    && chmod +x /home/lm_studio.AppImage \
-    && /home/lm_studio.AppImage --appimage-extract \
-    && chown -R node:node /home/squashfs-root/ \
-    && cd ~ \
+    libopenblas0-pthread \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
@@ -128,14 +126,6 @@ RUN \
     # Npm    
     bash ${PATH_ROOT}script/npm.sh "build"
 
-CMD \
-    # Gpu
-    bash ${PATH_ROOT}script/gpu.sh \
-    # Dbus
-    && bash ${PATH_ROOT}script/dbus.sh \
-    # LM studio
-    && bash ${PATH_ROOT}script/lm_studio.sh \
-    # NodeJs
-    && bash ${PATH_ROOT}script/nodejs.sh
+CMD ["sh", "-c", "bash ${PATH_ROOT}script/gpu.sh && bash ${PATH_ROOT}script/dbus.sh && bash ${PATH_ROOT}script/llamaCpp.sh && bash ${PATH_ROOT}script/nodejs.sh"]
 
 EXPOSE ${SERVER_PORT}
