@@ -37,7 +37,7 @@ ENV EGL_PLATFORM=wayland
 ENV ANGLE_DEFAULT_PLATFORM=egl
 ENV DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}bus"
 ENV PULSE_SERVER="unix:/mnt/wslg/PulseServer"
-ENV LD_LIBRARY_PATH="${PATH_ROOT}llamaCpp/build-${DEVICE}/"
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64/:${PATH_ROOT}llamaCpp/bin/"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
@@ -112,6 +112,11 @@ RUN cd ~ \
     # LlamaCpp
     && apt-get update && apt-get install -y \
     libopenblas0-pthread \
+    && if [ "${DEVICE}" = "gpu" ]; then \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb -o "cuda-keyring_1.1-1_all.deb" && \
+    dpkg -i "cuda-keyring_1.1-1_all.deb" && \
+    apt-get update && apt-get install -y cuda-runtime-13-0; \
+    fi \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \

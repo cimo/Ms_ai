@@ -55,7 +55,7 @@ fi
 # Engine
 envsubst '${pathEngineModel}' < "${pathEngineModel}preset_local_${DEVICE}.ini.template" > "${pathEngineModel}preset.ini"
 
-"${PATH_ROOT}llamaCpp/build-${DEVICE}/llama-server" \
+"${PATH_ROOT}llamaCpp/bin/llama-server" \
 --host ${urlEngineHost} \
 --port ${urlEnginePort} \
 --ssl-key-file ${MS_AI_PATH_CERTIFICATE_KEY} \

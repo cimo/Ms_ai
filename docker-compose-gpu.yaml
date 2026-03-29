@@ -20,7 +20,7 @@ services:
         _SERVER_PORT: ${SERVER_PORT}
         _PATH_ROOT: ${PATH_ROOT}
         _PATH_CERTIFICATE_PEM: ${MS_AI_PATH_CERTIFICATE_PEM}
-        _DEVICE: "cuda"
+        _DEVICE: "gpu"
     network_mode: "host"
     volumes:
       - ./:${PATH_ROOT}
