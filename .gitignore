@@ -37,7 +37,7 @@ dist
 llamaCpp/model/*
 !llamaCpp/model/.gitkeep
 !llamaCpp/model/preset_local_cpu.ini.template
-!llamaCpp/model/preset_local_cuda.ini.template
+!llamaCpp/model/preset_local_gpu.ini.template
 log/*
 !log/.gitkeep
 node_modules
