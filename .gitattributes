@@ -16,4 +16,4 @@
 # cimo +
 *.sh text eol=lf
 *.py text eol=lf
-llamaCpp/libggml-cuda.so.0.9.8 filter=lfs diff=lfs merge=lfs -text
+llamaCpp/bin/libggml-cuda.so.0.9.8 filter=lfs diff=lfs merge=lfs -text
