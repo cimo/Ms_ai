@@ -30,9 +30,10 @@ pnpm-debug.log*
 .npmrc
 .nv
 .pki
-certificate/**/*
-!certificate/**/
-!certificate/**/.gitkeep
+certificate/**
+!certificate/.gitkeep
+!certificate/custom/.gitkeep
+!certificate/proxy/.gitkeep
 dist
 llamaCpp/model/*
 !llamaCpp/model/.gitkeep
