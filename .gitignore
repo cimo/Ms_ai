@@ -30,6 +30,7 @@ pnpm-debug.log*
 .npmrc
 .nv
 .pki
+.venv
 certificate/**
 !certificate/.gitkeep
 !certificate/custom/.gitkeep
