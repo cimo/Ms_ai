@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euo pipefail
-
 urlEngine="${MS_AI_URL_ENGINE#*://}"
 urlEngineHost="${urlEngine%%:*}"
 urlEnginePort="${urlEngine##*:}"
