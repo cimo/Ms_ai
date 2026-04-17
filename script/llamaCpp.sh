@@ -8,18 +8,18 @@ export pathEngineModel=${PATH_ROOT}${MS_AI_PATH_ENGINE_MODEL}
 mkdir -p "${pathEngineModel}"
 
 # Embedding
-model="Qwen/Qwen3-Embedding-0.6B"
+model="unsloth/embeddinggemma-300M"
 
 modelCompany="${model%/*}"
 modelName="${model##*/}"
 
 mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-F16.gguf" ]
+if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-BF16.gguf" ]
 then
     echo "Download: ${modelName}"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-f16.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-F16.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName}-BF16.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-BF16.gguf"
     then
         echo "Skip ${modelName}: download failed."
     fi
@@ -70,7 +70,7 @@ do
     sleep 3
 done
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3-Embedding-0.6B-F16"}' > /dev/null 2>&1
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-BF16"}' > /dev/null 2>&1
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-0.8B-BF16"}' > /dev/null 2>&1
 

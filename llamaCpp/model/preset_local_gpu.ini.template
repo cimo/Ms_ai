@@ -1,6 +1,6 @@
 version = 1
 
-[Qwen3-Embedding-0.6B-F16]
+[embeddinggemma-300M-BF16]
 threads = 2
 ctx-size = 8192
 temp = 0
@@ -26,7 +26,7 @@ n-gpu-layers = 999
 flash-attn = on
 reasoning = off
 jinja = on
-model = ${pathEngineModel}Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-F16.gguf
+model = ${pathEngineModel}unsloth/embeddinggemma-300M-GGUF/embeddinggemma-300M-BF16.gguf
 embedding = true
 pooling = last
 
