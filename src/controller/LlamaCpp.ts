@@ -268,7 +268,7 @@ export default class LlamaCpp {
                             }
                         },
                         {
-                            model: "Qwen3-Embedding-0.6B-F16",
+                            model: "embeddinggemma-300M-BF16",
                             input: request.body.input
                         }
                     )
