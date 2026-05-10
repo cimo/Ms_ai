@@ -31,8 +31,6 @@ export const PATH_LOG = Ce.checkVariable("MS_AI_PATH_LOG");
 export const PATH_PUBLIC = Ce.checkVariable("MS_AI_PATH_PUBLIC");
 export const PATH_SCRIPT = Ce.checkVariable("MS_AI_PATH_SCRIPT");
 export const PATH_ENGINE_MODEL = Ce.checkVariable("MS_AI_PATH_ENGINE_MODEL");
-export const MIME_TYPE = Ce.checkVariable("MS_AI_MIME_TYPE") || (process.env["MS_AI_MIME_TYPE"] as string);
-export const FILE_SIZE_MB = Ce.checkVariable("MS_AI_FILE_SIZE_MB") || (process.env["MS_AI_FILE_SIZE_MB"] as string);
 export const QUEUE = Ce.checkVariable("MS_AI_QUEUE") || (process.env["MS_AI_QUEUE"] as string);
 
 Ce.loadFile(`./env/${ENV_NAME}.secret.env`);
@@ -204,24 +202,6 @@ export const fileOrFolderDelete = (path: string, callback: (result: NodeJS.Errno
             });
         }
     });
-};
-
-export const fileCheckMimeType = (value: string): boolean => {
-    if (MIME_TYPE && MIME_TYPE.includes(value)) {
-        return true;
-    }
-
-    return false;
-};
-
-export const fileCheckSize = (byte: number): boolean => {
-    const maxSizeByte = parseInt(FILE_SIZE_MB) * 1024 * 1024;
-
-    if (byte > maxSizeByte) {
-        return false;
-    }
-
-    return true;
 };
 
 export const responseBody = (stdoutValue: string, stderrValue: string | Error, response: Response, mode: number): void => {
