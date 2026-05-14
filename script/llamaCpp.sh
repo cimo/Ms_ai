@@ -15,11 +15,11 @@ modelName="${model##*/}"
 
 mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-Q8_0.gguf" ]
+if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf" ]
 then
     echo "Download: ${modelName}"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-Q8_0.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf"
     then
         echo "Skip ${modelName}: download failed."
     fi
@@ -33,20 +33,20 @@ modelName="${model##*/}"
 
 mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-Q8_0.gguf" ]
+if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf" ]
 then
     echo "Download: ${modelName}"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/${modelName}-Q8_0.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf"
     then
         echo "Skip ${modelName}: download failed."
     fi
 
-    echo "Download: ${modelName} - mmproj-BF16"
+    echo "Download: ${modelName} - mmproj-F16"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-BF16.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/mmproj-BF16.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-F16.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/mmproj-F16.gguf"
     then
-        echo "Skip ${modelName} - mmproj-BF16: download failed."
+        echo "Skip ${modelName} - mmproj-F16: download failed."
     fi
 fi
 
