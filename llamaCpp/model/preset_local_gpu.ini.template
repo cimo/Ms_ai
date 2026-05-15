@@ -1,14 +1,14 @@
 version = 1
 
 [embeddinggemma-300M-Q8_0]
-ctx-size = 8192
+ctx-size = 0
 temp = 1.0
 top-k = 64
 top-p = 0.95
 min-p = 0.0
 presence-penalty = 0.0
 frequency-penalty = 0.0
-repeat-penalty = 1.0
+repeat-penalty = 1.05
 repeat-last-n = 64
 n-predict = -1
 batch-size = 1024
@@ -30,14 +30,14 @@ embedding = true
 pooling = last
 
 [Qwen3.5-0.8B-Q8_0]
-ctx-size = 8192
+ctx-size = 0
 temp = 0.7
 top-k = 20
 top-p = 0.8
 min-p = 0.0
 presence-penalty = 1.5
 frequency-penalty = 0.0
-repeat-penalty = 1.0
+repeat-penalty = 1.05
 repeat-last-n = 64
 n-predict = -1
 batch-size = 512
