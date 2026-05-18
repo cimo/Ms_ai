@@ -26,7 +26,7 @@ then
 fi
 
 # Assistant
-model="unsloth/Qwen3.5-0.8B"
+model="unsloth/Qwen3.5-4B"
 
 modelCompany="${model%/*}"
 modelName="${model##*/}"
@@ -72,6 +72,6 @@ done
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q8_0"}' > /dev/null 2>&1
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-0.8B-Q8_0"}' > /dev/null 2>&1
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-4B-Q8_0"}' > /dev/null 2>&1
 
 echo "Engine ready."
