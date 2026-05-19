@@ -29,7 +29,7 @@ model = ${pathEngineModel}unsloth/embeddinggemma-300M-GGUF/Q8_0.gguf
 embedding = true
 pooling = last
 
-[Qwen3.5-0.8B-Q8_0]
+[Qwen3.5-2B-Q8_0]
 ctx-size = 0
 temp = 0.7
 top-k = 20
@@ -54,6 +54,6 @@ n-gpu-layers = 0
 flash-attn = on
 reasoning = off
 jinja = on
-model = ${pathEngineModel}unsloth/Qwen3.5-0.8B-GGUF/Q8_0.gguf
-mmproj = ${pathEngineModel}unsloth/Qwen3.5-0.8B-GGUF/mmproj-F16.gguf
+model = ${pathEngineModel}unsloth/Qwen3.5-2B-GGUF/Q8_0.gguf
+mmproj = ${pathEngineModel}unsloth/Qwen3.5-2B-GGUF/mmproj-F16.gguf
 image-max-tokens = 2048

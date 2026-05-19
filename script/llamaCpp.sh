@@ -26,29 +26,36 @@ then
 fi
 
 # Assistant
-model="unsloth/Qwen3.5-0.8B"
+modelList=(
+    "unsloth/Qwen3.5-2B"
+    "unsloth/Qwen3.5-9B"
+)
 
-modelCompany="${model%/*}"
-modelName="${model##*/}"
+for model in "${modelList[@]}"
+do
+    modelCompany="${model%/*}"
+    modelName="${model##*/}"
+    modelDir="${pathEngineModel}${modelCompany}/${modelName}-GGUF"
 
-mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
+    mkdir -p "${modelDir}"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf" ]
-then
-    echo "Download: ${modelName}"
-
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf"
+    if [ ! -f "${modelDir}/Q8_0.gguf" ]
     then
-        echo "Skip ${modelName}: download failed."
-    fi
+        echo "Download: ${modelName}"
 
-    echo "Download: ${modelName} - mmproj-F16"
+        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${modelDir}/Q8_0.gguf"
+        then
+            echo "Skip ${modelName}: download failed."
+        fi
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-F16.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/mmproj-F16.gguf"
-    then
-        echo "Skip ${modelName} - mmproj-F16: download failed."
+        echo "Download: ${modelName} - mmproj-F16"
+
+        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-F16.gguf" -o "${modelDir}/mmproj-F16.gguf"
+        then
+            echo "Skip ${modelName} - mmproj-F16: download failed."
+        fi
     fi
-fi
+done
 
 # Engine
 envsubst '${pathEngineModel}' < "${pathEngineModel}preset_local_${DEVICE}.ini.template" > "${pathEngineModel}preset.ini"
@@ -72,6 +79,6 @@ done
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q8_0"}' > /dev/null 2>&1
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-0.8B-Q8_0"}' > /dev/null 2>&1
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-2B-Q8_0"}' > /dev/null 2>&1
 
 echo "Engine ready."
