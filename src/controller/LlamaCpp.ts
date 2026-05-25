@@ -83,7 +83,7 @@ export default class LlamaCpp {
                 const cookieMcp = request.headers["cookie-mcp"] as string;
                 const sessionId = request.headers["mcp-session-id"] as string;
 
-                if (typeof cookieAi === "string" && typeof cookieMcp === "string" && typeof sessionId === "string") {
+                if (cookieAi !== "" && cookieMcp !== "" && sessionId !== "") {
                     response.setHeader("Content-Type", "text/event-stream");
                     response.setHeader("Cache-Control", "no-cache");
                     response.setHeader("Connection", "keep-alive");
