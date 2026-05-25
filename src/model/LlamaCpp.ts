@@ -7,11 +7,21 @@ interface IapiResponseItem {
     ];
 }
 
+export interface IapiModel {
+    data: {
+        id: string;
+    }[];
+}
+
 export interface IapiResponse {
     type: string;
     response: {
         output: IapiResponseItem[];
     };
+}
+
+export interface IapiResponseNonStream {
+    output: IapiResponseItem[];
 }
 
 export interface IapiToolCall {

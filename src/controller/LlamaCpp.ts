@@ -14,26 +14,58 @@ export default class LlamaCpp {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
+    private modelId: string;
 
     // Method
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
+        this.modelId = "";
     }
 
+    private model = async (): Promise<string[]> => {
+        let result: string[] = [];
+
+        await instanceEngine.api
+            .get<modelLlamaCpp.IapiModel>("/v1/models", {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((resultApi) => {
+                const cleanedList: string[] = [];
+
+                for (const value of resultApi.data.data) {
+                    if (value.id.toLowerCase() === "default") {
+                        continue;
+                    } else if (value.id.toLowerCase().includes("embedding")) {
+                        continue;
+                    }
+
+                    cleanedList.push(value.id);
+                }
+
+                result = [...cleanedList].sort((a, b) => a.localeCompare(b));
+
+                this.modelId = result[0];
+            })
+            .catch((error: Error) => {
+                helperSrc.writeLog("LlamaCpp.ts - /v1/models - catch()", error.message);
+            });
+
+        return result;
+    };
+
     api = (): void => {
+        this.model();
+
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                instanceEngine.api
-                    .get("/v1/models", {
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    })
+                this.model()
                     .then((result) => {
-                        helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
+                        helperSrc.responseBody(JSON.stringify(result), "", response, 200);
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - catch()", error.message);
@@ -47,9 +79,9 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const cookieAi = request.headers["cookie"];
-                const cookieMcp = request.headers["cookie-mcp"];
-                const sessionId = request.headers["mcp-session-id"];
+                const cookieAi = request.headers["cookie"] as string;
+                const cookieMcp = request.headers["cookie-mcp"] as string;
+                const sessionId = request.headers["mcp-session-id"] as string;
 
                 if (typeof cookieAi === "string" && typeof cookieMcp === "string" && typeof sessionId === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
@@ -206,7 +238,7 @@ export default class LlamaCpp {
 
                                         buffer += decoder.decode(value, { stream: true });
                                         const lineList = buffer.split(/\r?\n/);
-                                        buffer = lineList.pop() || "";
+                                        buffer = lineList.pop() as string;
 
                                         for (const line of lineList) {
                                             if (line.startsWith("data:")) {
@@ -277,6 +309,46 @@ export default class LlamaCpp {
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/embedding) - catch()", error.message);
+
+                        helperSrc.responseBody("", "ko", response, 500);
+                    });
+            }
+        });
+
+        this.app.post("/api/ragGraphifyExtract", Ca.authenticationMiddleware, (request: Request, response: Response) => {
+            const bearerToken = helperSrc.headerBearerToken(request);
+
+            if (bearerToken) {
+                const input = request.body.input as string;
+
+                const prompt = [
+                    "Extract all the relations between entities from the following TEXT.",
+                    "Return ONLY a valid JSON object with this exact structure:",
+                    '{"relationList": [{"source": "value1", "verb": "verb1", "target": "value2"}]}',
+                    `TEXT:\n${input}`
+                ].join("\n");
+
+                instanceEngine.api
+                    .post<modelLlamaCpp.IapiResponseNonStream>(
+                        "/v1/responses",
+                        {
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        },
+                        {
+                            stream: false,
+                            model: this.modelId,
+                            input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
+                            temperature: 0,
+                            max_tokens: 512
+                        }
+                    )
+                    .then((result) => {
+                        helperSrc.responseBody(result.data.output[0].content[0].text, "", response, 200);
+                    })
+                    .catch((error: Error) => {
+                        helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - catch()", error.message);
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });

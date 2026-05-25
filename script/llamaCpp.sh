@@ -27,8 +27,8 @@ fi
 
 # Assistant
 modelList=(
-    "unsloth/Qwen3.5-2B"
     "unsloth/Qwen3.5-9B"
+    "unsloth/Qwen3.5-2B"
 )
 
 for model in "${modelList[@]}"
@@ -79,6 +79,13 @@ done
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q8_0"}' > /dev/null 2>&1
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "Qwen3.5-2B-Q8_0"}' > /dev/null 2>&1
+if [ "${DEVICE}" = "gpu" ]
+then
+    modelAssistant="${modelList[0]##*/}-Q8_0"
+else
+    modelAssistant="${modelList[1]##*/}-Q8_0"
+fi
+
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d "{\"model\": \"${modelAssistant}\"}" > /dev/null 2>&1
 
 echo "Engine ready."
