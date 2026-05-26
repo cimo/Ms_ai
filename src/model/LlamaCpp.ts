@@ -36,3 +36,13 @@ export interface ItoolCall {
 export interface ItaskCall {
     list: ItoolCall[];
 }
+
+export interface IragRelation {
+    source: string;
+    verb: string;
+    target: string;
+}
+
+export interface IragGraphifyExtract {
+    relationList: IragRelation[];
+}

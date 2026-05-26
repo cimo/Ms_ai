@@ -56,6 +56,41 @@ export default class LlamaCpp {
         return result;
     };
 
+    private graphifyExtractNormalizeOutput = (jsonParse: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
+        let resultList: modelLlamaCpp.IragRelation[] = [];
+
+        if (
+            !jsonParse ||
+            typeof jsonParse !== "object" ||
+            Array.isArray(jsonParse) ||
+            !Array.isArray((jsonParse as { relationList?: unknown[] }).relationList)
+        ) {
+            helperSrc.writeLog("LlamaCpp.ts - graphifyExtractNormalizeOutput() - Error", text);
+
+            return { relationList: [] };
+        }
+
+        const relationList = (jsonParse as { relationList: unknown[] }).relationList;
+
+        for (const item of relationList) {
+            if (!item || typeof item !== "object") {
+                continue;
+            }
+
+            const source = typeof (item as { source?: unknown }).source === "string" ? (item as { source: string }).source.trim() : "";
+            const verb = typeof (item as { verb?: unknown }).verb === "string" ? (item as { verb: string }).verb.trim() : "";
+            const target = typeof (item as { target?: unknown }).target === "string" ? (item as { target: string }).target.trim() : "";
+
+            if (source === "" || verb === "" || target === "") {
+                continue;
+            }
+
+            resultList.push({ source, verb, target });
+        }
+
+        return { relationList: resultList };
+    };
+
     api = (): void => {
         this.model();
 
@@ -323,8 +358,12 @@ export default class LlamaCpp {
 
                 const prompt = [
                     "Extract all the relations between entities from the following TEXT.",
-                    "Return ONLY a valid JSON object with this exact structure:",
+                    "Return ONLY raw JSON. You MUST NOT wrap in ```json and MUST NOT include any explanation.",
+                    "You MUST NOT return a top-level array.",
+                    "If relations exist, you MUST return exactly this structure:",
                     '{"relationList": [{"source": "value1", "verb": "verb1", "target": "value2"}]}',
+                    "If no relations exist, you MUST return exactly:",
+                    '{"relationList":[]}',
                     `TEXT:\n${input}`
                 ].join("\n");
 
@@ -345,7 +384,12 @@ export default class LlamaCpp {
                         }
                     )
                     .then((result) => {
-                        helperSrc.responseBody(result.data.output[0].content[0].text, "", response, 200);
+                        const text = result.data.output[0].content[0].text;
+
+                        const jsonParse = JSON.parse(text);
+                        const output = this.graphifyExtractNormalizeOutput(jsonParse, text);
+
+                        helperSrc.responseBody(JSON.stringify(output), "", response, 200);
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - catch()", error.message);
