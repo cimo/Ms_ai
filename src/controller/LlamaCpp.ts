@@ -1,7 +1,6 @@
 import Express, { Request, Response } from "express";
 import { RateLimitRequestHandler } from "express-rate-limit";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
-import { Cq } from "@cimo/queue/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
@@ -35,7 +34,9 @@ export default class LlamaCpp {
             .then((resultApi) => {
                 const cleanedList: string[] = [];
 
-                for (const value of resultApi.data.data) {
+                for (let a = 0; a < resultApi.data.data.length; a++) {
+                    const value = resultApi.data.data[a];
+
                     if (value.id.toLowerCase() === "default") {
                         continue;
                     } else if (value.id.toLowerCase().includes("embedding")) {
@@ -72,7 +73,9 @@ export default class LlamaCpp {
 
         const relationList = (jsonParse as { relationList: unknown[] }).relationList;
 
-        for (const item of relationList) {
+        for (let a = 0; a < relationList.length; a++) {
+            const item = relationList[a];
+
             if (!item || typeof item !== "object") {
                 continue;
             }
@@ -110,214 +113,212 @@ export default class LlamaCpp {
             }
         });
 
-        this.app.post("/api/response", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
+        this.app.post("/api/response", Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const cookieAi = request.headers["cookie"] as string;
-                const cookieMcp = request.headers["cookie-mcp"] as string;
-                const sessionId = request.headers["mcp-session-id"] as string;
+                const mcpSessionId = request.headers["mcp-session-id"];
+                const mcpCookie = request.headers["mcp-cookie"];
+                const aiCookie = request.headers["ai-cookie"];
 
-                if (cookieAi !== "" && cookieMcp !== "" && sessionId !== "") {
+                if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
                     response.setHeader("Cache-Control", "no-cache");
                     response.setHeader("Connection", "keep-alive");
                     response.setHeader("X-Accel-Buffering", "no");
 
-                    Cq.list.push(() => {
-                        return new Promise((resolve, reject) => {
-                            request.on("close", () => {
-                                resolve();
+                    return new Promise((resolve, reject) => {
+                        request.on("close", () => {
+                            resolve("");
+
+                            return;
+                        });
+
+                        instanceEngine.api
+                            .stream(
+                                "/v1/responses",
+                                {
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "ai-cookie": aiCookie
+                                    }
+                                },
+                                request.body
+                            )
+                            .then(async (reader) => {
+                                const decoder = new TextDecoder("utf-8");
+                                let buffer = "";
+                                let resultData = "";
+
+                                while (true) {
+                                    const { value, done } = await reader.read();
+
+                                    if (done) {
+                                        if (helperSrc.isJson(resultData)) {
+                                            const resultDataParse = JSON.parse(resultData) as modelLlamaCpp.ItoolCall | modelLlamaCpp.ItaskCall;
+
+                                            if ("name" in resultDataParse) {
+                                                await instanceMcp.api
+                                                    .post<modelHelperSrc.IresponseBody>(
+                                                        "/api/tool-call",
+                                                        {
+                                                            headers: {
+                                                                "Content-Type": "application/json",
+                                                                "mcp-session-id": mcpSessionId,
+                                                                "mcp-cookie": mcpCookie
+                                                            }
+                                                        },
+                                                        {
+                                                            jsonrpc: "2.0",
+                                                            id: 1,
+                                                            method: "tools/call",
+                                                            params: {
+                                                                name: resultDataParse.name,
+                                                                arguments: resultDataParse.argumentObject,
+                                                                protocolVersion: "2025-06-18",
+                                                                capabilities: {},
+                                                                clientInfo: {
+                                                                    name: "curl",
+                                                                    version: "1.0"
+                                                                }
+                                                            }
+                                                        }
+                                                    )
+                                                    .then((result) => {
+                                                        const stdout = result.data.response.stdout as unknown as modelLlamaCpp.IapiToolCall;
+
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "tool_response",
+                                                                response: {
+                                                                    message: stdout.result.content[0].text
+                                                                }
+                                                            })}\n\n`
+                                                        );
+                                                    })
+                                                    .catch((error: Error) => {
+                                                        helperSrc.writeLog(
+                                                            "LlamaCpp.ts - api(/api/response) - api(/api/tool-call) - catch()",
+                                                            error.message
+                                                        );
+
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "tool_response",
+                                                                response: {
+                                                                    message: error.message
+                                                                }
+                                                            })}\n\n`
+                                                        );
+
+                                                        reject(new Error(error.message));
+
+                                                        return;
+                                                    });
+                                            } else if ("list" in resultDataParse) {
+                                                await instanceMcp.api
+                                                    .post<modelHelperSrc.IresponseBody>(
+                                                        "/api/task-call",
+                                                        {
+                                                            headers: {
+                                                                "Content-Type": "application/json",
+                                                                "mcp-session-id": mcpSessionId,
+                                                                "mcp-cookie": mcpCookie
+                                                            }
+                                                        },
+                                                        JSON.stringify(resultDataParse)
+                                                    )
+                                                    .then((result) => {
+                                                        const stdout = result.data.response.stdout;
+
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "tool_response",
+                                                                response: {
+                                                                    message: stdout
+                                                                }
+                                                            })}\n\n`
+                                                        );
+                                                    })
+                                                    .catch((error: Error) => {
+                                                        helperSrc.writeLog(
+                                                            "LlamaCpp.ts - api(/api/response) - api(/api/task-call) - catch()",
+                                                            error.message
+                                                        );
+
+                                                        response.write(
+                                                            `data: ${JSON.stringify({
+                                                                type: "tool_response",
+                                                                response: {
+                                                                    message: error.message
+                                                                }
+                                                            })}\n\n`
+                                                        );
+
+                                                        reject(new Error(error.message));
+
+                                                        return;
+                                                    });
+                                            }
+                                        }
+
+                                        response.end(
+                                            `data: ${JSON.stringify({
+                                                type: "response.completed"
+                                            })}\n\n`
+                                        );
+
+                                        resolve("");
+
+                                        return;
+                                    }
+
+                                    buffer += decoder.decode(value, { stream: true });
+                                    const lineList = buffer.split(/\r?\n/);
+                                    buffer = lineList.pop() as string;
+
+                                    for (let a = 0; a < lineList.length; a++) {
+                                        const line = lineList[a];
+
+                                        if (line.startsWith("data:")) {
+                                            const data = line.slice(5).trim();
+
+                                            const dataTrim = data.trim();
+
+                                            if (dataTrim.length > 1 && dataTrim[0] === "{" && dataTrim[dataTrim.length - 1] === "}") {
+                                                const dataTrimParse = JSON.parse(dataTrim) as modelLlamaCpp.IapiResponse;
+
+                                                if (dataTrimParse.type === "response.completed") {
+                                                    const dataItem = dataTrimParse.response.output[0].content[0].text;
+
+                                                    if (dataItem) {
+                                                        resultData = dataItem.trim();
+                                                    }
+                                                }
+                                            }
+
+                                            response.write(`data: ${data}\n\n`);
+                                        }
+                                    }
+                                }
+                            })
+                            .catch((error: Error) => {
+                                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - catch()", error.message);
+
+                                response.end(
+                                    `data: ${JSON.stringify({
+                                        type: "error",
+                                        error: {
+                                            message: error.message
+                                        }
+                                    })}\n\n`
+                                );
+
+                                reject(new Error(error.message));
 
                                 return;
                             });
-
-                            instanceEngine.api
-                                .stream(
-                                    "/v1/responses",
-                                    {
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                            Cookie: cookieAi
-                                        }
-                                    },
-                                    request.body
-                                )
-                                .then(async (reader) => {
-                                    const decoder = new TextDecoder("utf-8");
-                                    let buffer = "";
-                                    let resultData = "";
-
-                                    while (true) {
-                                        const { value, done } = await reader.read();
-
-                                        if (done) {
-                                            if (helperSrc.isJson(resultData)) {
-                                                const resultDataParse = JSON.parse(resultData) as modelLlamaCpp.ItoolCall | modelLlamaCpp.ItaskCall;
-
-                                                if ("name" in resultDataParse) {
-                                                    await instanceMcp.api
-                                                        .post<modelHelperSrc.IresponseBody>(
-                                                            "/api/tool-call",
-                                                            {
-                                                                headers: {
-                                                                    "Content-Type": "application/json",
-                                                                    Cookie: cookieMcp,
-                                                                    "mcp-session-id": sessionId
-                                                                }
-                                                            },
-                                                            {
-                                                                jsonrpc: "2.0",
-                                                                id: 1,
-                                                                method: "tools/call",
-                                                                params: {
-                                                                    name: resultDataParse.name,
-                                                                    arguments: resultDataParse.argumentObject,
-                                                                    protocolVersion: "2025-06-18",
-                                                                    capabilities: {},
-                                                                    clientInfo: {
-                                                                        name: "curl",
-                                                                        version: "1.0"
-                                                                    }
-                                                                }
-                                                            }
-                                                        )
-                                                        .then((result) => {
-                                                            const stdout = result.data.response.stdout as unknown as modelLlamaCpp.IapiToolCall;
-
-                                                            response.write(
-                                                                `data: ${JSON.stringify({
-                                                                    type: "tool_response",
-                                                                    response: {
-                                                                        message: stdout.result.content[0].text
-                                                                    }
-                                                                })}\n\n`
-                                                            );
-                                                        })
-                                                        .catch((error: Error) => {
-                                                            helperSrc.writeLog(
-                                                                "LlamaCpp.ts - api(/api/response) - api(/api/tool-call) - catch()",
-                                                                error.message
-                                                            );
-
-                                                            response.write(
-                                                                `data: ${JSON.stringify({
-                                                                    type: "tool_response",
-                                                                    response: {
-                                                                        message: error.message
-                                                                    }
-                                                                })}\n\n`
-                                                            );
-
-                                                            reject(new Error(error.message));
-
-                                                            return;
-                                                        });
-                                                } else if ("list" in resultDataParse) {
-                                                    await instanceMcp.api
-                                                        .post<modelHelperSrc.IresponseBody>(
-                                                            "/api/task-call",
-                                                            {
-                                                                headers: {
-                                                                    "Content-Type": "application/json",
-                                                                    Cookie: cookieMcp,
-                                                                    "mcp-session-id": sessionId
-                                                                }
-                                                            },
-                                                            JSON.stringify(resultDataParse)
-                                                        )
-                                                        .then((result) => {
-                                                            const stdout = result.data.response.stdout;
-
-                                                            response.write(
-                                                                `data: ${JSON.stringify({
-                                                                    type: "tool_response",
-                                                                    response: {
-                                                                        message: stdout
-                                                                    }
-                                                                })}\n\n`
-                                                            );
-                                                        })
-                                                        .catch((error: Error) => {
-                                                            helperSrc.writeLog(
-                                                                "LlamaCpp.ts - api(/api/response) - api(/api/task-call) - catch()",
-                                                                error.message
-                                                            );
-
-                                                            response.write(
-                                                                `data: ${JSON.stringify({
-                                                                    type: "tool_response",
-                                                                    response: {
-                                                                        message: error.message
-                                                                    }
-                                                                })}\n\n`
-                                                            );
-
-                                                            reject(new Error(error.message));
-
-                                                            return;
-                                                        });
-                                                }
-                                            }
-
-                                            response.end(
-                                                `data: ${JSON.stringify({
-                                                    type: "response.completed"
-                                                })}\n\n`
-                                            );
-
-                                            resolve();
-
-                                            return;
-                                        }
-
-                                        buffer += decoder.decode(value, { stream: true });
-                                        const lineList = buffer.split(/\r?\n/);
-                                        buffer = lineList.pop() as string;
-
-                                        for (const line of lineList) {
-                                            if (line.startsWith("data:")) {
-                                                const data = line.slice(5).trim();
-
-                                                const dataTrim = data.trim();
-
-                                                if (dataTrim.length > 1 && dataTrim[0] === "{" && dataTrim[dataTrim.length - 1] === "}") {
-                                                    const dataTrimParse = JSON.parse(dataTrim) as modelLlamaCpp.IapiResponse;
-
-                                                    if (dataTrimParse.type === "response.completed") {
-                                                        const dataItem = dataTrimParse.response.output[0].content[0].text;
-
-                                                        if (dataItem) {
-                                                            resultData = dataItem.trim();
-                                                        }
-                                                    }
-                                                }
-
-                                                response.write(`data: ${data}\n\n`);
-                                            }
-                                        }
-                                    }
-                                })
-                                .catch((error: Error) => {
-                                    helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - catch()", error.message);
-
-                                    response.end(
-                                        `data: ${JSON.stringify({
-                                            type: "error",
-                                            error: {
-                                                message: error.message
-                                            }
-                                        })}\n\n`
-                                    );
-
-                                    reject(new Error(error.message));
-
-                                    return;
-                                });
-                        });
                     });
-
-                    Cq.processParallel(parseInt(helperSrc.QUEUE));
                 }
             }
         });
@@ -354,7 +355,7 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const input = request.body.input as string;
+                const input = request.body.input;
 
                 const prompt = [
                     "Extract all the relations between entities from the following TEXT.",
