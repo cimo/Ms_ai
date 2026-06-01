@@ -187,11 +187,17 @@ export default class LlamaCpp {
                                                     .then((result) => {
                                                         const stdout = result.data.response.stdout as unknown as modelLlamaCpp.IapiToolCall;
 
+                                                        let message = "";
+
+                                                        if (stdout.result && stdout.result.content && stdout.result.content[0]) {
+                                                            message = stdout.result.content[0].text;
+                                                        }
+
                                                         response.write(
                                                             `data: ${JSON.stringify({
                                                                 type: "tool_response",
                                                                 response: {
-                                                                    message: stdout.result.content[0].text
+                                                                    message: message
                                                                 }
                                                             })}\n\n`
                                                         );
@@ -289,7 +295,13 @@ export default class LlamaCpp {
                                                 const dataTrimParse = JSON.parse(dataTrim) as modelLlamaCpp.IapiResponse;
 
                                                 if (dataTrimParse.type === "response.completed") {
-                                                    const dataItem = dataTrimParse.response.output[0].content[0].text;
+                                                    const dataOutput = dataTrimParse.response.output[0];
+
+                                                    let dataItem = "";
+
+                                                    if (dataOutput && dataOutput.content && dataOutput.content[0]) {
+                                                        dataItem = dataOutput.content[0].text;
+                                                    }
 
                                                     if (dataItem) {
                                                         resultData = dataItem.trim();
@@ -385,12 +397,22 @@ export default class LlamaCpp {
                         }
                     )
                     .then((result) => {
-                        const text = result.data.output[0].content[0].text;
+                        const dataOutput = result.data.output[0];
 
-                        const jsonParse = JSON.parse(text);
-                        const output = this.graphifyExtractNormalizeOutput(jsonParse, text);
+                        let text = "";
 
-                        helperSrc.responseBody(JSON.stringify(output), "", response, 200);
+                        if (dataOutput && dataOutput.content && dataOutput.content[0]) {
+                            text = dataOutput.content[0].text;
+                        }
+
+                        if (text && helperSrc.isJson(text)) {
+                            const jsonParse = JSON.parse(text);
+                            const output = this.graphifyExtractNormalizeOutput(jsonParse, text);
+
+                            helperSrc.responseBody(JSON.stringify(output), "", response, 200);
+                        } else {
+                            helperSrc.responseBody("", "ko", response, 500);
+                        }
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - catch()", error.message);
