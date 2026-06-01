@@ -6,7 +6,6 @@ import * as Http from "http";
 import * as Https from "https";
 import Fs from "fs";
 import { Ca } from "@cimo/authentication/dist/src/Main.js";
-import { Cc } from "@cimo/cronjob/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
@@ -159,7 +158,5 @@ export default class Server {
 const controllerServer = new Server();
 controllerServer.createSetting();
 controllerServer.createServer();
-
-Cc.execute(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}cronjob/`);
 
 helperSrc.keepProcess();
