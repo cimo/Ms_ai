@@ -102,18 +102,18 @@ export default class Microsoft {
 
         const cca = new ConfidentialClientApplication(this.configurationObject);
 
-        const authResult = await cca.acquireTokenByCode(tokenRequestObject);
+        const authObject = await cca.acquireTokenByCode(tokenRequestObject);
 
         let username = "";
 
-        if (authResult.account) {
-            username = authResult.account.username;
+        if (authObject.account) {
+            username = authObject.account.username;
         }
 
         result = {
             bearerToken: stateSplit[1],
             username,
-            accessToken: authResult.accessToken
+            accessToken: authObject.accessToken
         };
 
         return result;

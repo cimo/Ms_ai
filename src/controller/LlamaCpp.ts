@@ -22,39 +22,39 @@ export default class LlamaCpp {
         this.modelId = "";
     }
 
-    private model = async (): Promise<string[]> => {
-        let result: string[] = [];
-
-        await instanceEngine.api
+    private apiModel = async (): Promise<string[]> => {
+        return instanceEngine.api
             .get<modelLlamaCpp.IapiModel>("/v1/models", {
                 headers: {
                     "Content-Type": "application/json"
                 }
             })
             .then((resultApi) => {
+                const dataList = resultApi.data.data;
+
                 const cleanedList: string[] = [];
 
-                for (let a = 0; a < resultApi.data.data.length; a++) {
-                    const value = resultApi.data.data[a];
+                for (let a = 0; a < dataList.length; a++) {
+                    const value = dataList[a];
 
-                    if (value.id.toLowerCase() === "default") {
-                        continue;
-                    } else if (value.id.toLowerCase().includes("embedding")) {
+                    if (value.id.toLowerCase().includes("default") || value.id.toLowerCase().includes("embedding")) {
                         continue;
                     }
 
                     cleanedList.push(value.id);
                 }
 
-                result = [...cleanedList].sort((a, b) => a.localeCompare(b));
+                const result = [...cleanedList].sort((a, b) => a.localeCompare(b));
 
                 this.modelId = result[0];
+
+                return result;
             })
             .catch((error: Error) => {
                 helperSrc.writeLog("LlamaCpp.ts - /v1/models - catch()", error.message);
-            });
 
-        return result;
+                return [];
+            });
     };
 
     private graphifyExtractNormalizeOutput = (jsonParse: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
@@ -95,15 +95,17 @@ export default class LlamaCpp {
     };
 
     api = (): void => {
-        this.model();
+        this.apiModel();
 
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                this.model()
-                    .then((result) => {
-                        helperSrc.responseBody(JSON.stringify(result), "", response, 200);
+                this.apiModel()
+                    .then((resultApiList) => {
+                        const resultList = resultApiList;
+
+                        helperSrc.responseBody(JSON.stringify(resultList), "", response, 200);
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - catch()", error.message);
@@ -120,6 +122,7 @@ export default class LlamaCpp {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
+                const body = request.body;
 
                 if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
@@ -143,19 +146,21 @@ export default class LlamaCpp {
                                         "ai-cookie": aiCookie
                                     }
                                 },
-                                request.body
+                                body
                             )
-                            .then(async (reader) => {
+                            .then(async (resultApi) => {
                                 const decoder = new TextDecoder("utf-8");
                                 let buffer = "";
-                                let resultData = "";
+                                let textResponseCompleted = "";
 
                                 while (true) {
-                                    const { value, done } = await reader.read();
+                                    const { value, done } = await resultApi.read();
 
                                     if (done) {
-                                        if (helperSrc.isJson(resultData)) {
-                                            const resultDataParse = JSON.parse(resultData) as modelLlamaCpp.ItoolCall | modelLlamaCpp.ItaskCall;
+                                        if (helperSrc.isJson(textResponseCompleted)) {
+                                            const resultDataParse = JSON.parse(textResponseCompleted) as
+                                                | modelLlamaCpp.ItoolCall
+                                                | modelLlamaCpp.ItaskCall;
 
                                             if ("name" in resultDataParse) {
                                                 await instanceMcp.api
@@ -184,8 +189,8 @@ export default class LlamaCpp {
                                                             }
                                                         }
                                                     )
-                                                    .then((result) => {
-                                                        const stdout = result.data.response.stdout as unknown as modelLlamaCpp.IapiToolCall;
+                                                    .then((resultApiSub) => {
+                                                        const stdout = JSON.parse(resultApiSub.data.response.stdout) as modelLlamaCpp.IapiToolCall;
 
                                                         let message = "";
 
@@ -234,8 +239,8 @@ export default class LlamaCpp {
                                                         },
                                                         JSON.stringify(resultDataParse)
                                                     )
-                                                    .then((result) => {
-                                                        const stdout = result.data.response.stdout;
+                                                    .then((resultApiSub) => {
+                                                        const stdout = resultApiSub.data.response.stdout;
 
                                                         response.write(
                                                             `data: ${JSON.stringify({
@@ -287,29 +292,27 @@ export default class LlamaCpp {
                                         const line = lineList[a];
 
                                         if (line.startsWith("data:")) {
-                                            const data = line.slice(5).trim();
+                                            const lineSlice = line.slice(5).trim();
 
-                                            const dataTrim = data.trim();
-
-                                            if (dataTrim.length > 1 && dataTrim[0] === "{" && dataTrim[dataTrim.length - 1] === "}") {
-                                                const dataTrimParse = JSON.parse(dataTrim) as modelLlamaCpp.IapiResponse;
+                                            if (lineSlice.length > 1 && lineSlice[0] === "{" && lineSlice[lineSlice.length - 1] === "}") {
+                                                const dataTrimParse = JSON.parse(lineSlice) as modelLlamaCpp.IapiResponse;
 
                                                 if (dataTrimParse.type === "response.completed") {
                                                     const dataOutput = dataTrimParse.response.output[0];
 
-                                                    let dataItem = "";
+                                                    let text = "";
 
                                                     if (dataOutput && dataOutput.content && dataOutput.content[0]) {
-                                                        dataItem = dataOutput.content[0].text;
+                                                        text = dataOutput.content[0].text;
                                                     }
 
-                                                    if (dataItem) {
-                                                        resultData = dataItem.trim();
+                                                    if (text) {
+                                                        textResponseCompleted = text.trim();
                                                     }
                                                 }
                                             }
 
-                                            response.write(`data: ${data}\n\n`);
+                                            response.write(`data: ${lineSlice}\n\n`);
                                         }
                                     }
                                 }
@@ -339,8 +342,10 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
+                const body = request.body;
+
                 instanceEngine.api
-                    .post(
+                    .post<modelLlamaCpp.IapiEmbedding>(
                         "/v1/embeddings",
                         {
                             headers: {
@@ -349,11 +354,13 @@ export default class LlamaCpp {
                         },
                         {
                             model: "embeddinggemma-300M-Q8_0",
-                            input: request.body.input
+                            input: body.input
                         }
                     )
-                    .then((result) => {
-                        helperSrc.responseBody(JSON.stringify(result.data), "", response, 200);
+                    .then((resultApi) => {
+                        const data = resultApi.data;
+
+                        helperSrc.responseBody(JSON.stringify(data), "", response, 200);
                     })
                     .catch((error: Error) => {
                         helperSrc.writeLog("LlamaCpp.ts - api(/api/embedding) - catch()", error.message);
@@ -367,7 +374,7 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const input = request.body.input;
+                const body = request.body;
 
                 const prompt = [
                     "Extract all the relations between entities from the following TEXT.",
@@ -377,7 +384,7 @@ export default class LlamaCpp {
                     '{"relationList": [{"source": "value1", "verb": "verb1", "target": "value2"}]}',
                     "If no relations exist, you MUST return exactly:",
                     '{"relationList":[]}',
-                    `TEXT:\n${input}`
+                    `TEXT:\n${body.input}`
                 ].join("\n");
 
                 instanceEngine.api
@@ -396,8 +403,8 @@ export default class LlamaCpp {
                             max_tokens: 512
                         }
                     )
-                    .then((result) => {
-                        const dataOutput = result.data.output[0];
+                    .then((resultApi) => {
+                        const dataOutput = resultApi.data.output[0];
 
                         let text = "";
 

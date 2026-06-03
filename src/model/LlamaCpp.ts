@@ -13,6 +13,12 @@ export interface IapiModel {
     }[];
 }
 
+export interface IapiEmbedding {
+    data: {
+        embedding: number[];
+    };
+}
+
 export interface IapiResponse {
     type: string;
     response: {
