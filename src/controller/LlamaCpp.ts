@@ -112,6 +112,10 @@ export default class LlamaCpp {
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
+            } else {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
             }
         });
 
@@ -190,12 +194,16 @@ export default class LlamaCpp {
                                                         }
                                                     )
                                                     .then((resultApiSub) => {
-                                                        const stdout = JSON.parse(resultApiSub.data.response.stdout) as modelLlamaCpp.IapiToolCall;
+                                                        const stdout = resultApiSub.data.response.stdout;
 
                                                         let message = "";
 
-                                                        if (stdout.result && stdout.result.content && stdout.result.content[0]) {
-                                                            message = stdout.result.content[0].text;
+                                                        if (helperSrc.isJson(stdout)) {
+                                                            const stdoutParse = JSON.parse(stdout) as modelLlamaCpp.IapiToolCall;
+
+                                                            if (stdoutParse.result && stdoutParse.result.content && stdoutParse.result.content[0]) {
+                                                                message = stdoutParse.result.content[0].text;
+                                                            }
                                                         }
 
                                                         response.write(
@@ -334,7 +342,15 @@ export default class LlamaCpp {
                                 return;
                             });
                     });
+                } else {
+                    helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid header.");
+
+                    helperSrc.responseBody("", "ko", response, 500);
                 }
+            } else {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
             }
         });
 
@@ -367,6 +383,10 @@ export default class LlamaCpp {
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
+            } else {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/embedding) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
             }
         });
 
@@ -418,7 +438,9 @@ export default class LlamaCpp {
 
                             helperSrc.responseBody(JSON.stringify(output), "", response, 200);
                         } else {
-                            helperSrc.responseBody("", "ko", response, 500);
+                            helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - Error", text);
+
+                            helperSrc.responseBody(JSON.stringify({ relationList: [] }), "", response, 200);
                         }
                     })
                     .catch((error: Error) => {
@@ -426,6 +448,10 @@ export default class LlamaCpp {
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
+            } else {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
             }
         });
     };
