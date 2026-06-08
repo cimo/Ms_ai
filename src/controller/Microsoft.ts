@@ -69,7 +69,7 @@ export default class Microsoft {
             const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
 
             const parameterObject: AuthorizationUrlRequest = {
-                scopes: JSON.parse(AD_SCOPE),
+                scopes: JSON.parse(AD_SCOPE) as string[],
                 redirectUri: AD_URL_REDIRECT,
                 state: `${codeVerifier}:-:${bearerToken}`,
                 codeChallenge,
@@ -88,14 +88,12 @@ export default class Microsoft {
     };
 
     codeToToken = async (code: string, state: string): Promise<modelMicrosoft.IcodeToTokenResult> => {
-        let result = {} as modelMicrosoft.IcodeToTokenResult;
-
         const stateSplit = state.split(":-:");
 
         const tokenRequestObject: AuthorizationCodeRequest = {
             code,
             redirectUri: AD_URL_REDIRECT,
-            scopes: JSON.parse(AD_SCOPE),
+            scopes: JSON.parse(AD_SCOPE) as string[],
             codeVerifier: stateSplit[0],
             claims: this.claimsJsonObject
         };
@@ -110,13 +108,11 @@ export default class Microsoft {
             username = authObject.account.username;
         }
 
-        result = {
+        return {
             bearerToken: stateSplit[1],
             username,
             accessToken: authObject.accessToken
         };
-
-        return result;
     };
 
     logout = (): void => {

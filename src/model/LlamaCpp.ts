@@ -15,8 +15,14 @@ export interface IapiModel {
 
 export interface IapiEmbedding {
     data: {
+        object: string;
         embedding: number[];
+        index: number;
     };
+}
+
+export interface IapiResponseNonStream {
+    output: IapiResponseItem[];
 }
 
 export interface IapiResponse {
@@ -26,11 +32,7 @@ export interface IapiResponse {
     };
 }
 
-export interface IapiResponseNonStream {
-    output: IapiResponseItem[];
-}
-
-export interface IapiToolCall {
+export interface IapiResponseTool {
     result: IapiResponseItem;
 }
 

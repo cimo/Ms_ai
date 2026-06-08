@@ -44,11 +44,11 @@ export default class LlamaCpp {
                     cleanedList.push(value.id);
                 }
 
-                const result = [...cleanedList].sort((a, b) => a.localeCompare(b));
+                const resultList = [...cleanedList].sort((a, b) => a.localeCompare(b));
 
-                this.modelId = result[0];
+                this.modelId = resultList[0];
 
-                return result;
+                return resultList;
             })
             .catch((error: Error) => {
                 helperSrc.writeLog("LlamaCpp.ts - /v1/models - catch()", error.message);
@@ -57,21 +57,21 @@ export default class LlamaCpp {
             });
     };
 
-    private graphifyExtractNormalizeOutput = (jsonParse: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
+    private graphifyExtractNormalizeOutput = (textObject: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
         let resultList: modelLlamaCpp.IragRelation[] = [];
 
         if (
-            !jsonParse ||
-            typeof jsonParse !== "object" ||
-            Array.isArray(jsonParse) ||
-            !Array.isArray((jsonParse as { relationList?: unknown[] }).relationList)
+            !textObject ||
+            typeof textObject !== "object" ||
+            Array.isArray(textObject) ||
+            !Array.isArray((textObject as { relationList?: unknown[] }).relationList)
         ) {
             helperSrc.writeLog("LlamaCpp.ts - graphifyExtractNormalizeOutput() - Error", text);
 
             return { relationList: [] };
         }
 
-        const relationList = (jsonParse as { relationList: unknown[] }).relationList;
+        const relationList = (textObject as { relationList: unknown[] }).relationList;
 
         for (let a = 0; a < relationList.length; a++) {
             const item = relationList[a];
@@ -155,18 +155,18 @@ export default class LlamaCpp {
                             .then(async (resultApi) => {
                                 const decoder = new TextDecoder("utf-8");
                                 let buffer = "";
-                                let textResponseCompleted = "";
+                                let responseCompleted = "";
 
                                 while (true) {
                                     const { value, done } = await resultApi.read();
 
                                     if (done) {
-                                        if (helperSrc.isJson(textResponseCompleted)) {
-                                            const resultDataParse = JSON.parse(textResponseCompleted) as
+                                        if (helperSrc.isJson(responseCompleted)) {
+                                            const responseCompletedObject = JSON.parse(responseCompleted) as
                                                 | modelLlamaCpp.ItoolCall
                                                 | modelLlamaCpp.ItaskCall;
 
-                                            if ("name" in resultDataParse) {
+                                            if ("name" in responseCompletedObject) {
                                                 await instanceMcp.api
                                                     .post<modelHelperSrc.IresponseBody>(
                                                         "/api/tool-call",
@@ -182,8 +182,8 @@ export default class LlamaCpp {
                                                             id: 1,
                                                             method: "tools/call",
                                                             params: {
-                                                                name: resultDataParse.name,
-                                                                arguments: resultDataParse.argumentObject,
+                                                                name: responseCompletedObject.name,
+                                                                arguments: responseCompletedObject.argumentObject,
                                                                 protocolVersion: "2025-06-18",
                                                                 capabilities: {},
                                                                 clientInfo: {
@@ -199,10 +199,14 @@ export default class LlamaCpp {
                                                         let message = "";
 
                                                         if (helperSrc.isJson(stdout)) {
-                                                            const stdoutParse = JSON.parse(stdout) as modelLlamaCpp.IapiToolCall;
+                                                            const stdoutObject = JSON.parse(stdout) as modelLlamaCpp.IapiResponseTool;
 
-                                                            if (stdoutParse.result && stdoutParse.result.content && stdoutParse.result.content[0]) {
-                                                                message = stdoutParse.result.content[0].text;
+                                                            if (
+                                                                stdoutObject.result &&
+                                                                stdoutObject.result.content &&
+                                                                stdoutObject.result.content[0]
+                                                            ) {
+                                                                message = stdoutObject.result.content[0].text;
                                                             }
                                                         }
 
@@ -234,7 +238,7 @@ export default class LlamaCpp {
 
                                                         return;
                                                     });
-                                            } else if ("list" in resultDataParse) {
+                                            } else if ("list" in responseCompletedObject) {
                                                 await instanceMcp.api
                                                     .post<modelHelperSrc.IresponseBody>(
                                                         "/api/task-call",
@@ -245,7 +249,7 @@ export default class LlamaCpp {
                                                                 "mcp-cookie": mcpCookie
                                                             }
                                                         },
-                                                        JSON.stringify(resultDataParse)
+                                                        JSON.stringify(responseCompletedObject)
                                                     )
                                                     .then((resultApiSub) => {
                                                         const stdout = resultApiSub.data.response.stdout;
@@ -303,10 +307,10 @@ export default class LlamaCpp {
                                             const lineSlice = line.slice(5).trim();
 
                                             if (lineSlice.length > 1 && lineSlice[0] === "{" && lineSlice[lineSlice.length - 1] === "}") {
-                                                const dataTrimParse = JSON.parse(lineSlice) as modelLlamaCpp.IapiResponse;
+                                                const lineSliceObject = JSON.parse(lineSlice) as modelLlamaCpp.IapiResponse;
 
-                                                if (dataTrimParse.type === "response.completed") {
-                                                    const dataOutput = dataTrimParse.response.output[0];
+                                                if (lineSliceObject.type === "response.completed") {
+                                                    const dataOutput = lineSliceObject.response.output[0];
 
                                                     let text = "";
 
@@ -315,7 +319,7 @@ export default class LlamaCpp {
                                                     }
 
                                                     if (text) {
-                                                        textResponseCompleted = text.trim();
+                                                        responseCompleted = text.trim();
                                                     }
                                                 }
                                             }
@@ -433,8 +437,8 @@ export default class LlamaCpp {
                         }
 
                         if (text && helperSrc.isJson(text)) {
-                            const jsonParse = JSON.parse(text);
-                            const output = this.graphifyExtractNormalizeOutput(jsonParse, text);
+                            const textObject = JSON.parse(text) as string;
+                            const output = this.graphifyExtractNormalizeOutput(textObject, text);
 
                             helperSrc.responseBody(JSON.stringify(output), "", response, 200);
                         } else {

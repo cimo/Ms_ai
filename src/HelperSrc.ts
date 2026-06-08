@@ -65,7 +65,7 @@ const fileSize = (value: Uint8Array | number, isOnlyByte = true): string => {
 
 Ce.loadFile(`./env/${ENV_NAME}.secret.env`);
 
-export const localeConfiguration: Record<string, { locale: string; currency: string; dateFormat: string }> = {
+export const localeConfigurationObject: modelHelperSrc.IlocaleConfiguration = {
     // Asia
     jp: { locale: "ja-JP", currency: "JPY", dateFormat: "a" },
     cn: { locale: "zh-CN", currency: "CNY", dateFormat: "a" },
@@ -113,11 +113,13 @@ export const localeFormat = (value: number | Date, isMonth = true, isDay = true,
     if (typeof value === "number") {
         const formatOption: Intl.NumberFormatOptions = {
             style: "decimal",
-            currency: localeConfiguration[LOCALE].currency
+            currency: localeConfigurationObject[LOCALE].currency
         };
 
-        return new Intl.NumberFormat(localeConfiguration[LOCALE].locale, formatOption).format(value);
-    } else if (value instanceof Date) {
+        return new Intl.NumberFormat(localeConfigurationObject[LOCALE].locale, formatOption).format(value);
+    } else if (value instanceof Date && !isNaN(value.getTime())) {
+        let result = "";
+
         let formatOption: Intl.DateTimeFormatOptions = {
             year: "numeric"
         };
@@ -137,7 +139,7 @@ export const localeFormat = (value: number | Date, isMonth = true, isDay = true,
             formatOption.hour12 = false;
         }
 
-        let result = new Intl.DateTimeFormat(localeConfiguration[LOCALE].locale, formatOption).format(value);
+        result = new Intl.DateTimeFormat(localeConfigurationObject[LOCALE].locale, formatOption).format(value);
 
         if (!isMonth && !isDay && !isTime) {
             result = parseInt(result).toString();
@@ -183,10 +185,10 @@ export const isJson = (value: string): boolean => {
 };
 
 export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true): modelHelperSrc.IfileDetail => {
-    let result = {} as modelHelperSrc.IfileDetail;
+    let resultObject = {} as modelHelperSrc.IfileDetail;
 
     if (!value) {
-        return result;
+        return resultObject;
     }
 
     const fileNameWithExtension = value.includes("/") ? value.split("/").pop()! : value;
@@ -195,14 +197,14 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
     if (value.includes("/") && Fs.existsSync(value)) {
         const stat = Fs.statSync(value);
 
-        result = {
-            ...result,
+        resultObject = {
+            ...resultObject,
             size: fileSize(stat.size, isOnlyByte),
             dateModified: localeFormat(stat.mtime) || ""
         };
     }
 
-    const signatureList: { mimeType: string; extension: string; category: string; magicByteList?: { offset: number; bytes: number[] }[] }[] = [
+    const signatureList: modelHelperSrc.IfileDetailSignature[] = [
         { mimeType: "text/javascript", extension: "js", category: "code" },
         { mimeType: "text/javascript", extension: "jsx", category: "code" },
         { mimeType: "text/javascript", extension: "mjs", category: "code" },
@@ -370,8 +372,8 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
             }
 
             if (isMatched) {
-                result = {
-                    ...result,
+                resultObject = {
+                    ...resultObject,
                     fileName: fileNameWithExtension,
                     baseName,
                     mimeType: signatureList[a].mimeType,
@@ -383,14 +385,14 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
         }
     }
 
-    if ((!result.mimeType || result.mimeType === "application/zip") && value !== "") {
+    if ((!resultObject.mimeType || resultObject.mimeType === "application/zip") && value !== "") {
         const extensionIndex = value.lastIndexOf(".");
         const extension = extensionIndex !== -1 ? value.slice(extensionIndex + 1).toLowerCase() : "";
 
         for (let a = 0; a < signatureList.length; a++) {
             if (signatureList[a].extension === extension) {
-                result = {
-                    ...result,
+                resultObject = {
+                    ...resultObject,
                     fileName: fileNameWithExtension,
                     baseName,
                     mimeType: signatureList[a].mimeType,
@@ -403,7 +405,7 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
         }
     }
 
-    return result;
+    return resultObject;
 };
 
 export const fileCheckMimeType = (value: string): boolean => {
