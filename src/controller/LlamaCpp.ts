@@ -126,7 +126,7 @@ export default class LlamaCpp {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
-                const body = request.body;
+                const body = request.body as modelLlamaCpp.IapiResponseBody;
 
                 if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
@@ -362,7 +362,7 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const body = request.body;
+                const body = request.body as modelLlamaCpp.IapiEmbeddingBody;
 
                 instanceEngine.api
                     .post<modelLlamaCpp.IapiEmbedding>(
@@ -398,7 +398,7 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                const body = request.body;
+                const body = request.body as modelLlamaCpp.IapiRagGraphifyExtractBody;
 
                 const prompt = [
                     "Extract all the relations between entities from the following TEXT.",
