@@ -15,11 +15,29 @@ modelName="${model##*/}"
 
 mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf" ]
+if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf" ]
 then
     echo "Download: ${modelName}"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q8_0.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName,,}-Q4_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf"
+    then
+        echo "Skip ${modelName}: download failed."
+    fi
+fi
+
+# Graphify
+model="unsloth/gemma-4-E2B-it"
+
+modelCompany="${model%/*}"
+modelName="${model##*/}"
+
+mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
+
+if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf" ]
+then
+    echo "Download: ${modelName}"
+
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q4_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf"
     then
         echo "Skip ${modelName}: download failed."
     fi
@@ -39,11 +57,11 @@ do
 
     mkdir -p "${modelDir}"
 
-    if [ ! -f "${modelDir}/Q8_0.gguf" ]
+    if [ ! -f "${modelDir}/Q4_0.gguf" ]
     then
         echo "Download: ${modelName}"
 
-        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q8_0.gguf" -o "${modelDir}/Q8_0.gguf"
+        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q4_0.gguf" -o "${modelDir}/Q4_0.gguf"
         then
             echo "Skip ${modelName}: download failed."
         fi
@@ -65,9 +83,9 @@ envsubst '${pathEngineModel}' < "${pathEngineModel}preset_local_${DEVICE}.ini.te
 --port ${urlEnginePort} \
 --ssl-key-file ${MS_AI_PATH_CERTIFICATE_KEY} \
 --ssl-cert-file ${MS_AI_PATH_CERTIFICATE_CRT} \
---models-max 2 \
+--models-max 3 \
 --no-webui \
---threads 2 \
+--threads $(( $(nproc) / 2 )) \
 --models-preset "${pathEngineModel}preset.ini" >> "${PATH_ROOT}${MS_AI_PATH_LOG}llamaCpp.log" 2>&1 &
 
 tail -f "${PATH_ROOT}${MS_AI_PATH_LOG}llamaCpp.log" > /dev/null 2>&1 &
@@ -77,13 +95,15 @@ do
     sleep 3
 done
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q8_0"}' > /dev/null 2>&1
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q4_0"}' > /dev/null 2>&1
+
+curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "gemma-4-E2B-it-Q4_0"}' > /dev/null 2>&1
 
 if [ "${DEVICE}" = "gpu" ]
 then
-    modelAssistant="${modelList[0]##*/}-Q8_0"
+    modelAssistant="${modelList[0]##*/}-Q4_0"
 else
-    modelAssistant="${modelList[1]##*/}-Q8_0"
+    modelAssistant="${modelList[1]##*/}-Q4_0"
 fi
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d "{\"model\": \"${modelAssistant}\"}" > /dev/null 2>&1

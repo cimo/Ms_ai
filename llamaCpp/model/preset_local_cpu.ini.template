@@ -1,6 +1,6 @@
 version = 1
 
-[embeddinggemma-300M-Q8_0]
+[embeddinggemma-300M-Q4_0]
 ctx-size = 8192
 temp = 1.0
 top-k = 64
@@ -12,7 +12,7 @@ repeat-penalty = 1.05
 repeat-last-n = 64
 n-predict = -1
 batch-size = 1024
-ubatch-size = 512
+ubatch-size = 1024
 parallel = 1
 kv-offload = true
 kv-unified = true
@@ -25,12 +25,40 @@ n-gpu-layers = 0
 flash-attn = on
 reasoning = off
 jinja = on
-model = ${pathEngineModel}unsloth/embeddinggemma-300M-GGUF/Q8_0.gguf
+model = ${pathEngineModel}unsloth/embeddinggemma-300M-GGUF/Q4_0.gguf
+cache-ram = 0
 embedding = true
 pooling = mean
+
+[gemma-4-E2B-it-Q4_0]
+ctx-size = 8192
+temp = 1.0
+top-k = 64
+top-p = 0.95
+min-p = 0.0
+presence-penalty = 0.0
+frequency-penalty = 0.0
+repeat-penalty = 1.0
+repeat-last-n = 64
+n-predict = -1
+batch-size = 1024
+ubatch-size = 1024
+parallel = 4
+kv-offload = true
+kv-unified = true
+mlock = false
+mmap = true
+seed = -1
+cache-type-k = q8_0
+cache-type-v = q8_0
+n-gpu-layers = 0
+flash-attn = on
+reasoning = off
+jinja = on
+model = ${pathEngineModel}unsloth/gemma-4-E2B-it-GGUF/Q4_0.gguf
 cache-ram = 0
 
-[Qwen3.5-2B-Q8_0]
+[Qwen3.5-2B-Q4_0]
 ctx-size = 8192
 temp = 0.7
 top-k = 20
@@ -41,8 +69,8 @@ frequency-penalty = 0.0
 repeat-penalty = 1.0
 repeat-last-n = 64
 n-predict = -1
-batch-size = 512
-ubatch-size = 256
+batch-size = 1024
+ubatch-size = 1024
 parallel = 1
 kv-offload = true
 kv-unified = true
@@ -55,8 +83,8 @@ n-gpu-layers = 0
 flash-attn = on
 reasoning = off
 jinja = on
-model = ${pathEngineModel}unsloth/Qwen3.5-2B-GGUF/Q8_0.gguf
+model = ${pathEngineModel}unsloth/Qwen3.5-2B-GGUF/Q4_0.gguf
+cache-ram = 0
 mmproj = ${pathEngineModel}unsloth/Qwen3.5-2B-GGUF/mmproj-F16.gguf
 image-min-tokens = 1024
-image-max-tokens = 2048
-cache-ram = 0
+image-max-tokens = 1024

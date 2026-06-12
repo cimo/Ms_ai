@@ -37,7 +37,11 @@ export default class LlamaCpp {
                 for (let a = 0; a < dataList.length; a++) {
                     const value = dataList[a];
 
-                    if (value.id.toLowerCase().includes("default") || value.id.toLowerCase().includes("embedding")) {
+                    if (
+                        value.id.toLowerCase().includes("default") ||
+                        value.id.toLowerCase().includes("embeddinggemma-300M".toLowerCase()) ||
+                        value.id.toLowerCase().includes("gemma-4-E2B-it".toLowerCase())
+                    ) {
                         continue;
                     }
 
@@ -85,6 +89,14 @@ export default class LlamaCpp {
             const target = typeof (item as { target?: unknown }).target === "string" ? (item as { target: string }).target.trim() : "";
 
             if (source === "" || verb === "" || target === "") {
+                continue;
+            }
+
+            if (source.toLowerCase() === target.toLowerCase() || source.length < 3 || target.length < 3) {
+                continue;
+            }
+
+            if (source.toLowerCase().includes("http") || target.toLowerCase().includes("http")) {
                 continue;
             }
 
@@ -373,7 +385,7 @@ export default class LlamaCpp {
                             }
                         },
                         {
-                            model: "embeddinggemma-300M-Q8_0",
+                            model: "embeddinggemma-300M-Q4_0",
                             input: body.input
                         }
                     )
@@ -421,10 +433,10 @@ export default class LlamaCpp {
                         },
                         {
                             stream: false,
-                            model: this.modelId,
+                            model: "gemma-4-E2B-it-Q4_0",
                             input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
                             temperature: 0,
-                            max_tokens: 512
+                            max_tokens: 768
                         }
                     )
                     .then((resultApi) => {
@@ -434,6 +446,29 @@ export default class LlamaCpp {
 
                         if (dataOutput && dataOutput.content && dataOutput.content[0]) {
                             text = dataOutput.content[0].text;
+                        }
+
+                        if (text && !helperSrc.isJson(text)) {
+                            const relationMatchList = text.match(/\{[^{}]*"source"[^{}]*"verb"[^{}]*"target"[^{}]*\}/g);
+
+                            if (relationMatchList) {
+                                const relationValidList: string[] = [];
+
+                                for (let a = 0; a < relationMatchList.length; a++) {
+                                    if (helperSrc.isJson(relationMatchList[a])) {
+                                        relationValidList.push(relationMatchList[a]);
+                                    }
+                                }
+
+                                if (relationValidList.length > 0) {
+                                    text = `{"relationList": [${relationValidList.join(",")}]}`;
+
+                                    helperSrc.writeLog(
+                                        "LlamaCpp.ts - api(/api/ragGraphifyExtract) - Recovery",
+                                        `Relation: ${relationValidList.length}/${relationMatchList.length}`
+                                    );
+                                }
+                            }
                         }
 
                         if (text && helperSrc.isJson(text)) {
