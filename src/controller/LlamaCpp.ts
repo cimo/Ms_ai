@@ -61,7 +61,7 @@ export default class LlamaCpp {
             });
     };
 
-    private graphifyExtractNormalizeOutput = (textObject: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
+    private graphifyExtractNormalizeOutput = (textObject: unknown): modelLlamaCpp.IragGraphifyExtract => {
         const entityResultList: modelLlamaCpp.IragEntity[] = [];
         const relationResultList: modelLlamaCpp.IragRelation[] = [];
 
@@ -71,8 +71,6 @@ export default class LlamaCpp {
             Array.isArray(textObject) ||
             !Array.isArray((textObject as { relationList?: unknown[] }).relationList)
         ) {
-            helperSrc.writeLog("LlamaCpp.ts - graphifyExtractNormalizeOutput() - Error", text);
-
             return { entityList: [], relationList: [] };
         }
 
@@ -233,14 +231,14 @@ export default class LlamaCpp {
                                                             id: 1,
                                                             method: "tools/call",
                                                             params: {
-                                                                name: responseCompletedObject.name,
-                                                                arguments: responseCompletedObject.argumentObject,
                                                                 protocolVersion: "2025-06-18",
                                                                 capabilities: {},
                                                                 clientInfo: {
                                                                     name: "curl",
                                                                     version: "1.0"
-                                                                }
+                                                                },
+                                                                name: responseCompletedObject.name,
+                                                                arguments: responseCompletedObject.argumentObject
                                                             }
                                                         }
                                                     )
@@ -265,6 +263,8 @@ export default class LlamaCpp {
                                                             `data: ${JSON.stringify({
                                                                 type: "tool_response",
                                                                 response: {
+                                                                    name: responseCompletedObject.name,
+                                                                    arguments: JSON.stringify(responseCompletedObject.argumentObject),
                                                                     message: message
                                                                 }
                                                             })}\n\n`
@@ -452,11 +452,12 @@ export default class LlamaCpp {
                 const body = request.body as modelLlamaCpp.IapiRagGraphifyExtractBody;
 
                 const prompt = [
-                    "Extract the entities and the relations between them from the following TEXT.",
+                    "Extract the entities and EVERY relation explicitly stated in the following TEXT, as completely and exhaustively as possible.",
                     "Return ONLY raw JSON. You MUST NOT wrap in ```json and MUST NOT include any explanation.",
                     "You MUST NOT return a top-level array.",
                     "Each entity has a name, a type (one of: person, organization, place, concept, object, event) and a short description grounded in the TEXT.",
                     "Each relation has a source entity name, a verb, a target entity name, a short description and a keyword that summarizes the relation theme.",
+                    "You MUST NOT keep only the main or most salient relations: include every distinct relation the TEXT states, including minor, factual, contextual, temporal and circumstantial ones, exactly as written.",
                     "Every source and target MUST be present in the entity list.",
                     "You MUST return exactly this structure:",
                     '{"entityList": [{"name": "value1", "type": "concept", "description": "desc1"}], "relationList": [{"source": "value1", "verb": "verb1", "target": "value2", "description": "desc2", "keyword": "keyword1"}]}',
@@ -476,9 +477,7 @@ export default class LlamaCpp {
                         {
                             stream: false,
                             model: "gemma-4-E2B-it-Q4_0",
-                            input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
-                            temperature: 0,
-                            max_tokens: 1536
+                            input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }]
                         }
                     )
                     .then((resultApi) => {
@@ -515,22 +514,15 @@ export default class LlamaCpp {
 
                             if (entityValidList.length > 0 || relationValidList.length > 0) {
                                 text = `{"entityList": [${entityValidList.join(",")}], "relationList": [${relationValidList.join(",")}]}`;
-
-                                helperSrc.writeLog(
-                                    "LlamaCpp.ts - api(/api/ragGraphifyExtract) - Recovery",
-                                    `Entity: ${entityValidList.length} - Relation: ${relationValidList.length}`
-                                );
                             }
                         }
 
                         if (text && helperSrc.isJson(text)) {
                             const textObject = JSON.parse(text) as string;
-                            const output = this.graphifyExtractNormalizeOutput(textObject, text);
+                            const output = this.graphifyExtractNormalizeOutput(textObject);
 
                             helperSrc.responseBody(JSON.stringify(output), "", response, 200);
                         } else {
-                            helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - Error", text);
-
                             helperSrc.responseBody(JSON.stringify({ entityList: [], relationList: [] }), "", response, 200);
                         }
                     })
