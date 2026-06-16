@@ -63,12 +63,21 @@ export interface ItaskCall {
     list: ItoolCall[];
 }
 
+export interface IragEntity {
+    name: string;
+    type: string;
+    description: string;
+}
+
 export interface IragRelation {
     source: string;
     verb: string;
     target: string;
+    description: string;
+    keyword: string;
 }
 
 export interface IragGraphifyExtract {
+    entityList: IragEntity[];
     relationList: IragRelation[];
 }

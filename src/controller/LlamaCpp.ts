@@ -62,7 +62,8 @@ export default class LlamaCpp {
     };
 
     private graphifyExtractNormalizeOutput = (textObject: unknown, text: string): modelLlamaCpp.IragGraphifyExtract => {
-        let resultList: modelLlamaCpp.IragRelation[] = [];
+        const entityResultList: modelLlamaCpp.IragEntity[] = [];
+        const relationResultList: modelLlamaCpp.IragRelation[] = [];
 
         if (
             !textObject ||
@@ -72,7 +73,42 @@ export default class LlamaCpp {
         ) {
             helperSrc.writeLog("LlamaCpp.ts - graphifyExtractNormalizeOutput() - Error", text);
 
-            return { relationList: [] };
+            return { entityList: [], relationList: [] };
+        }
+
+        const typeAllowList = ["person", "organization", "place", "concept", "object", "event"];
+
+        let entityList: unknown[] = [];
+
+        if (Array.isArray((textObject as { entityList?: unknown[] }).entityList)) {
+            entityList = (textObject as { entityList: unknown[] }).entityList;
+        }
+
+        for (let a = 0; a < entityList.length; a++) {
+            const item = entityList[a];
+
+            if (!item || typeof item !== "object") {
+                continue;
+            }
+
+            const name = typeof (item as { name?: unknown }).name === "string" ? (item as { name: string }).name.trim() : "";
+            let type = typeof (item as { type?: unknown }).type === "string" ? (item as { type: string }).type.trim().toLowerCase() : "";
+            const description =
+                typeof (item as { description?: unknown }).description === "string" ? (item as { description: string }).description.trim() : "";
+
+            if (name === "" || name.length < 3) {
+                continue;
+            }
+
+            if (name.toLowerCase().includes("http")) {
+                continue;
+            }
+
+            if (!typeAllowList.includes(type)) {
+                type = "concept";
+            }
+
+            entityResultList.push({ name, type, description });
         }
 
         const relationList = (textObject as { relationList: unknown[] }).relationList;
@@ -87,6 +123,9 @@ export default class LlamaCpp {
             const source = typeof (item as { source?: unknown }).source === "string" ? (item as { source: string }).source.trim() : "";
             const verb = typeof (item as { verb?: unknown }).verb === "string" ? (item as { verb: string }).verb.trim() : "";
             const target = typeof (item as { target?: unknown }).target === "string" ? (item as { target: string }).target.trim() : "";
+            const description =
+                typeof (item as { description?: unknown }).description === "string" ? (item as { description: string }).description.trim() : "";
+            const keyword = typeof (item as { keyword?: unknown }).keyword === "string" ? (item as { keyword: string }).keyword.trim() : "";
 
             if (source === "" || verb === "" || target === "") {
                 continue;
@@ -100,10 +139,10 @@ export default class LlamaCpp {
                 continue;
             }
 
-            resultList.push({ source, verb, target });
+            relationResultList.push({ source, verb, target, description, keyword });
         }
 
-        return { relationList: resultList };
+        return { entityList: entityResultList, relationList: relationResultList };
     };
 
     api = (): void => {
@@ -413,13 +452,16 @@ export default class LlamaCpp {
                 const body = request.body as modelLlamaCpp.IapiRagGraphifyExtractBody;
 
                 const prompt = [
-                    "Extract all the relations between entities from the following TEXT.",
+                    "Extract the entities and the relations between them from the following TEXT.",
                     "Return ONLY raw JSON. You MUST NOT wrap in ```json and MUST NOT include any explanation.",
                     "You MUST NOT return a top-level array.",
-                    "If relations exist, you MUST return exactly this structure:",
-                    '{"relationList": [{"source": "value1", "verb": "verb1", "target": "value2"}]}',
-                    "If no relations exist, you MUST return exactly:",
-                    '{"relationList":[]}',
+                    "Each entity has a name, a type (one of: person, organization, place, concept, object, event) and a short description grounded in the TEXT.",
+                    "Each relation has a source entity name, a verb, a target entity name, a short description and a keyword that summarizes the relation theme.",
+                    "Every source and target MUST be present in the entity list.",
+                    "You MUST return exactly this structure:",
+                    '{"entityList": [{"name": "value1", "type": "concept", "description": "desc1"}], "relationList": [{"source": "value1", "verb": "verb1", "target": "value2", "description": "desc2", "keyword": "keyword1"}]}',
+                    "If nothing exists, you MUST return exactly:",
+                    '{"entityList":[],"relationList":[]}',
                     `TEXT:\n${body.input}`
                 ].join("\n");
 
@@ -436,7 +478,7 @@ export default class LlamaCpp {
                             model: "gemma-4-E2B-it-Q4_0",
                             input: [{ role: "user", content: [{ type: "input_text", text: prompt }] }],
                             temperature: 0,
-                            max_tokens: 768
+                            max_tokens: 1536
                         }
                     )
                     .then((resultApi) => {
@@ -449,25 +491,35 @@ export default class LlamaCpp {
                         }
 
                         if (text && !helperSrc.isJson(text)) {
+                            const entityMatchList = text.match(/\{[^{}]*"name"[^{}]*"type"[^{}]*"description"[^{}]*\}/g);
                             const relationMatchList = text.match(/\{[^{}]*"source"[^{}]*"verb"[^{}]*"target"[^{}]*\}/g);
 
-                            if (relationMatchList) {
-                                const relationValidList: string[] = [];
+                            const entityValidList: string[] = [];
+                            const relationValidList: string[] = [];
 
+                            if (entityMatchList) {
+                                for (let a = 0; a < entityMatchList.length; a++) {
+                                    if (helperSrc.isJson(entityMatchList[a])) {
+                                        entityValidList.push(entityMatchList[a]);
+                                    }
+                                }
+                            }
+
+                            if (relationMatchList) {
                                 for (let a = 0; a < relationMatchList.length; a++) {
                                     if (helperSrc.isJson(relationMatchList[a])) {
                                         relationValidList.push(relationMatchList[a]);
                                     }
                                 }
+                            }
 
-                                if (relationValidList.length > 0) {
-                                    text = `{"relationList": [${relationValidList.join(",")}]}`;
+                            if (entityValidList.length > 0 || relationValidList.length > 0) {
+                                text = `{"entityList": [${entityValidList.join(",")}], "relationList": [${relationValidList.join(",")}]}`;
 
-                                    helperSrc.writeLog(
-                                        "LlamaCpp.ts - api(/api/ragGraphifyExtract) - Recovery",
-                                        `Relation: ${relationValidList.length}/${relationMatchList.length}`
-                                    );
-                                }
+                                helperSrc.writeLog(
+                                    "LlamaCpp.ts - api(/api/ragGraphifyExtract) - Recovery",
+                                    `Entity: ${entityValidList.length} - Relation: ${relationValidList.length}`
+                                );
                             }
                         }
 
@@ -479,7 +531,7 @@ export default class LlamaCpp {
                         } else {
                             helperSrc.writeLog("LlamaCpp.ts - api(/api/ragGraphifyExtract) - Error", text);
 
-                            helperSrc.responseBody(JSON.stringify({ relationList: [] }), "", response, 200);
+                            helperSrc.responseBody(JSON.stringify({ entityList: [], relationList: [] }), "", response, 200);
                         }
                     })
                     .catch((error: Error) => {
