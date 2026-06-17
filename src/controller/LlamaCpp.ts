@@ -22,7 +22,7 @@ export default class LlamaCpp {
         this.modelId = "";
     }
 
-    private apiModel = async (): Promise<string[]> => {
+    private modelAvailable = async (): Promise<string[]> => {
         return instanceEngine.api
             .get<modelLlamaCpp.IapiModel>("/v1/models", {
                 headers: {
@@ -144,13 +144,13 @@ export default class LlamaCpp {
     };
 
     api = (): void => {
-        this.apiModel();
+        this.modelAvailable();
 
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (bearerToken) {
-                this.apiModel()
+                this.modelAvailable()
                     .then((resultApiList) => {
                         const resultList = resultApiList;
 
@@ -248,7 +248,7 @@ export default class LlamaCpp {
                                                         let message = "";
 
                                                         if (helperSrc.isJson(stdout)) {
-                                                            const stdoutObject = JSON.parse(stdout) as modelLlamaCpp.IapiResponseTool;
+                                                            const stdoutObject = JSON.parse(stdout) as modelLlamaCpp.IllmResponseTool;
 
                                                             if (
                                                                 stdoutObject.result &&
@@ -358,7 +358,7 @@ export default class LlamaCpp {
                                             const lineSlice = line.slice(5).trim();
 
                                             if (lineSlice.length > 1 && lineSlice[0] === "{" && lineSlice[lineSlice.length - 1] === "}") {
-                                                const lineSliceObject = JSON.parse(lineSlice) as modelLlamaCpp.IapiResponse;
+                                                const lineSliceObject = JSON.parse(lineSlice) as modelLlamaCpp.IllmResponse;
 
                                                 if (lineSliceObject.type === "response.completed") {
                                                     const dataOutput = lineSliceObject.response.output[0];

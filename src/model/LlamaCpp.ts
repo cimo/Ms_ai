@@ -1,3 +1,12 @@
+interface IapiResponseItem {
+    content: [
+        {
+            type: string;
+            text: string;
+        }
+    ];
+}
+
 export interface IapiEmbeddingBody {
     input: string;
 }
@@ -14,15 +23,6 @@ export interface IapiResponseBody extends Record<string, unknown> {
         content: string | { type: string; text?: string; image_url?: string }[];
     }[];
     tools: unknown[];
-}
-
-interface IapiResponseItem {
-    content: [
-        {
-            type: string;
-            text: string;
-        }
-    ];
 }
 
 export interface IapiModel {
@@ -43,14 +43,14 @@ export interface IapiResponseNonStream {
     output: IapiResponseItem[];
 }
 
-export interface IapiResponse {
+export interface IllmResponse {
     type: string;
     response: {
         output: IapiResponseItem[];
     };
 }
 
-export interface IapiResponseTool {
+export interface IllmResponseTool {
     result: IapiResponseItem;
 }
 
