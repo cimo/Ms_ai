@@ -139,18 +139,6 @@ export default class Server {
                     helperSrc.responseBody("", "ko", response, 500);
                 }
             });
-
-            this.app.get("/user-info", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                const bearerToken = helperSrc.headerBearerToken(request);
-
-                if (bearerToken) {
-                    const userInfo = this.userObject[bearerToken] ? JSON.stringify(this.userObject[bearerToken]) : "";
-
-                    helperSrc.responseBody(userInfo, "", response, 200);
-                } else {
-                    helperSrc.responseBody("", "ko", response, 500);
-                }
-            });
         });
     };
 }
