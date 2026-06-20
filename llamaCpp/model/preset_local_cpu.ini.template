@@ -30,34 +30,6 @@ cache-ram = 0
 embedding = true
 pooling = mean
 
-[gemma-4-E2B-it-Q4_0]
-ctx-size = 12288
-temp = 0
-top-k = 64
-top-p = 0.95
-min-p = 0.0
-presence-penalty = 0.0
-frequency-penalty = 0.0
-repeat-penalty = 1.0
-repeat-last-n = 64
-n-predict = 1536
-batch-size = 1024
-ubatch-size = 1024
-parallel = 4
-kv-offload = true
-kv-unified = false
-mlock = false
-mmap = true
-seed = -1
-cache-type-k = q8_0
-cache-type-v = q8_0
-n-gpu-layers = 0
-flash-attn = on
-reasoning = off
-jinja = on
-model = ${pathEngineModel}unsloth/gemma-4-E2B-it-GGUF/Q4_0.gguf
-cache-ram = 0
-
 [Qwen3.5-2B-Q4_0]
 ctx-size = 8192
 temp = 0.7

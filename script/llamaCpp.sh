@@ -25,24 +25,6 @@ then
     fi
 fi
 
-# Graphify
-model="unsloth/gemma-4-E2B-it"
-
-modelCompany="${model%/*}"
-modelName="${model##*/}"
-
-mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
-
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf" ]
-then
-    echo "Download: ${modelName}"
-
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q4_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf"
-    then
-        echo "Skip ${modelName}: download failed."
-    fi
-fi
-
 # Assistant
 modelList=(
     "unsloth/Qwen3.5-9B"
@@ -96,8 +78,6 @@ do
 done
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "embeddinggemma-300M-Q4_0"}' > /dev/null 2>&1
-
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d '{"model": "gemma-4-E2B-it-Q4_0"}' > /dev/null 2>&1
 
 if [ "${DEVICE}" = "gpu" ]
 then

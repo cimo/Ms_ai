@@ -37,11 +37,7 @@ export default class LlamaCpp {
                 for (let a = 0; a < dataList.length; a++) {
                     const value = dataList[a];
 
-                    if (
-                        value.id.toLowerCase().includes("default") ||
-                        value.id.toLowerCase().includes("embeddinggemma-300M".toLowerCase()) ||
-                        value.id.toLowerCase().includes("gemma-4-E2B-it".toLowerCase())
-                    ) {
+                    if (value.id.toLowerCase().includes("default") || value.id.toLowerCase().includes("embeddinggemma-300M".toLowerCase())) {
                         continue;
                     }
 
