@@ -7,15 +7,7 @@ interface IapiResponseItem {
     ];
 }
 
-export interface IapiEmbeddingBody {
-    input: string;
-}
-
-export interface IapiRagGraphifyExtractBody {
-    input: string;
-}
-
-export interface IapiResponseBody extends Record<string, unknown> {
+export interface IapiDataResponseBody extends Record<string, unknown> {
     stream: boolean;
     model: string;
     input: {
@@ -23,6 +15,14 @@ export interface IapiResponseBody extends Record<string, unknown> {
         content: string | { type: string; text?: string; image_url?: string }[];
     }[];
     tools: unknown[];
+}
+
+export interface IapiEmbeddingBody {
+    input: string;
+}
+
+export interface IapiRagGraphifyExtractBody {
+    input: string;
 }
 
 export interface IapiModel {

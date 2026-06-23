@@ -87,7 +87,7 @@ export default class Microsoft {
         return result;
     };
 
-    codeToToken = async (code: string, state: string): Promise<modelMicrosoft.IcodeToTokenResult> => {
+    codeToToken = async (code: string, state: string): Promise<modelMicrosoft.IdataCodeToToken> => {
         const stateSplit = state.split(":-:");
 
         const tokenRequestObject: AuthorizationCodeRequest = {

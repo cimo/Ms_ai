@@ -171,7 +171,7 @@ export default class LlamaCpp {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
-                const body = request.body as modelLlamaCpp.IapiResponseBody;
+                const body = request.body as modelLlamaCpp.IapiDataResponseBody;
 
                 if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
                     response.setHeader("Content-Type", "text/event-stream");

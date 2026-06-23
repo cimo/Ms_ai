@@ -1,4 +1,4 @@
-export interface IcodeToTokenResult {
+export interface IdataCodeToToken {
     bearerToken: string;
     username: string;
     accessToken: string;
