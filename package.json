@@ -18,10 +18,10 @@
         "execute": "nodemon --config nodemon.json"
     },
     "dependencies": {
-        "@cimo/authentication": "1.1.40",
-        "@cimo/environment": "1.0.30",
-        "@cimo/request": "1.7.47",
-        "@cimo/queue": "1.0.10",
+        "@cimo/authentication": "1.1.41",
+        "@cimo/environment": "1.0.31",
+        "@cimo/request": "1.7.48",
+        "@cimo/queue": "1.0.11",
         "express": "5.2.1",
         "express-rate-limit": "8.5.2",
         "cookie-parser": "1.4.7",
