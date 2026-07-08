@@ -12,16 +12,19 @@ model="unsloth/embeddinggemma-300M"
 
 modelCompany="${model%/*}"
 modelName="${model##*/}"
+modelDir="${pathEngineModel}${modelCompany}/${modelName}-GGUF"
 
-mkdir -p "${pathEngineModel}${modelCompany}/${modelName}-GGUF/"
+mkdir -p "${modelDir}"
 
-if [ ! -f "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf" ]
+if [ ! -f "${modelDir}/Q4_0.gguf" ]
 then
     echo "Download: ${modelName}"
 
-    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName,,}-Q4_0.gguf" -o "${pathEngineModel}${modelCompany}/${modelName}-GGUF/Q4_0.gguf"
+    if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName,,}-GGUF/resolve/main/${modelName,,}-Q4_0.gguf" -o "${modelDir}/Q4_0.gguf"
     then
         echo "Skip ${modelName}: download failed."
+
+        rm -f "${modelDir}/Q4_0.gguf"
     fi
 fi
 
@@ -46,6 +49,8 @@ do
         if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q4_0.gguf" -o "${modelDir}/Q4_0.gguf"
         then
             echo "Skip ${modelName}: download failed."
+
+            rm -f "${modelDir}/Q4_0.gguf"
         fi
 
         echo "Download: ${modelName} - mmproj-F16"
@@ -53,6 +58,8 @@ do
         if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-F16.gguf" -o "${modelDir}/mmproj-F16.gguf"
         then
             echo "Skip ${modelName} - mmproj-F16: download failed."
+
+            rm -f "${modelDir}/mmproj-F16.gguf"
         fi
     fi
 done
