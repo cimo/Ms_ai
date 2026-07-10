@@ -206,7 +206,7 @@ export default class LlamaCpp {
                                     const { value, done } = await resultApi.read();
 
                                     if (done) {
-                                        if (helperSrc.isJson(responseCompleted)) {
+                                        if (helperSrc.jsonCheck(responseCompleted)) {
                                             const responseCompletedObject = JSON.parse(responseCompleted) as
                                                 | modelLlamaCpp.ItoolCall
                                                 | modelLlamaCpp.ItaskCall;
@@ -243,7 +243,7 @@ export default class LlamaCpp {
 
                                                         let message = "";
 
-                                                        if (helperSrc.isJson(stdout)) {
+                                                        if (helperSrc.jsonCheck(stdout)) {
                                                             const stdoutObject = JSON.parse(stdout) as modelLlamaCpp.IllmResponseTool;
 
                                                             if (
@@ -485,7 +485,7 @@ export default class LlamaCpp {
                             text = dataOutput.content[0].text;
                         }
 
-                        if (text && !helperSrc.isJson(text)) {
+                        if (text && !helperSrc.jsonCheck(text)) {
                             const entityMatchList = text.match(/\{[^{}]*"name"[^{}]*"type"[^{}]*"description"[^{}]*\}/g);
                             const relationMatchList = text.match(/\{[^{}]*"source"[^{}]*"verb"[^{}]*"target"[^{}]*\}/g);
 
@@ -494,7 +494,7 @@ export default class LlamaCpp {
 
                             if (entityMatchList) {
                                 for (let a = 0; a < entityMatchList.length; a++) {
-                                    if (helperSrc.isJson(entityMatchList[a])) {
+                                    if (helperSrc.jsonCheck(entityMatchList[a])) {
                                         entityValidList.push(entityMatchList[a]);
                                     }
                                 }
@@ -502,7 +502,7 @@ export default class LlamaCpp {
 
                             if (relationMatchList) {
                                 for (let a = 0; a < relationMatchList.length; a++) {
-                                    if (helperSrc.isJson(relationMatchList[a])) {
+                                    if (helperSrc.jsonCheck(relationMatchList[a])) {
                                         relationValidList.push(relationMatchList[a]);
                                     }
                                 }
@@ -513,7 +513,7 @@ export default class LlamaCpp {
                             }
                         }
 
-                        if (text && helperSrc.isJson(text)) {
+                        if (text && helperSrc.jsonCheck(text)) {
                             const textObject = JSON.parse(text) as string;
                             const output = this.graphifyExtractNormalizeOutput(textObject);
 
