@@ -37,7 +37,7 @@ ENV EGL_PLATFORM=wayland
 ENV ANGLE_DEFAULT_PLATFORM=egl
 ENV DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}bus"
 ENV PULSE_SERVER="unix:/mnt/wslg/PulseServer"
-ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib/:/usr/local/cuda/lib64/:${PATH_ROOT}llamaCpp/bin/"
+ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib/:/usr/local/cuda/lib64/:/usr/local/cuda-13.2/lib64/:${PATH_ROOT}llamaCpp/bin/"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
@@ -116,7 +116,7 @@ RUN cd ~ \
     && curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb -o cuda-keyring_1.1-1_all.deb \
     && dpkg -i cuda-keyring_1.1-1_all.deb \
     && apt-get update && apt-get install -y \
-    cuda-runtime-12-0 \
+    cuda-runtime-13-2 \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
