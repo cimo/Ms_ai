@@ -97,13 +97,15 @@ export default class LlamaCpp {
                     response.setHeader("Connection", "keep-alive");
                     response.setHeader("X-Accel-Buffering", "no");
 
+                    const abortControllerEngine = new AbortController();
+
+                    response.on("close", () => {
+                        if (!response.writableEnded) {
+                            abortControllerEngine.abort();
+                        }
+                    });
+
                     return new Promise((resolve, reject) => {
-                        request.on("close", () => {
-                            resolve("");
-
-                            return;
-                        });
-
                         instanceEngine.api
                             .stream(
                                 "/v1/responses",
@@ -111,7 +113,8 @@ export default class LlamaCpp {
                                     headers: {
                                         "Content-Type": "application/json",
                                         "ai-cookie": aiCookie
-                                    }
+                                    },
+                                    signal: abortControllerEngine.signal
                                 },
                                 body
                             )
@@ -295,6 +298,12 @@ export default class LlamaCpp {
                                 }
                             })
                             .catch((error: Error) => {
+                                if (abortControllerEngine.signal.aborted) {
+                                    resolve("");
+
+                                    return;
+                                }
+
                                 helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - catch()", error.message);
 
                                 response.end(
