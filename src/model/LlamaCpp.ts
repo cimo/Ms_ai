@@ -15,6 +15,7 @@ export interface IapiDataResponseBody extends Record<string, unknown> {
         content: string | { type: string; text?: string; image_url?: string }[];
     }[];
     tools: unknown[];
+    temperature?: number;
 }
 
 export interface IapiModel {
