@@ -9,36 +9,35 @@ mkdir -p "${pathEngineModel}"
 
 # Assistant
 modelList=(
-    "unsloth/Qwen3.5-9B"
-    "unsloth/Qwen3.5-2B"
+    "qwen3.5-9B"
+    "qwen3.5-2B"
 )
 
 for model in "${modelList[@]}"
 do
-    modelCompany="${model%/*}"
-    modelName="${model##*/}"
-    modelDir="${pathEngineModel}${modelCompany}/${modelName}-GGUF"
+    sizeModel="${model##*-}"
+    pathModel="${pathEngineModel}qwen3.5-${sizeModel}-GGUF/"
 
-    mkdir -p "${modelDir}"
+    mkdir -p "${pathModel}"
 
-    if [ ! -f "${modelDir}/Q4_0.gguf" ]
+    if [ ! -f "${pathModel}Q4_0.gguf" ]
     then
-        echo "Download: ${modelName}"
+        echo "Download: ${model} - Q4_0"
 
-        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/${modelName}-Q4_0.gguf" -o "${modelDir}/Q4_0.gguf"
+        if ! curl -fsSL "https://huggingface.co/cimo001/qwen/resolve/main/3.5/gguf/${sizeModel}/Q4_0.gguf" -o "${pathModel}Q4_0.gguf"
         then
-            echo "Skip ${modelName}: download failed."
+            echo "Skip ${model} - Q4_0: download failed."
 
-            rm -f "${modelDir}/Q4_0.gguf"
+            rm -f "${pathModel}Q4_0.gguf"
         fi
 
-        echo "Download: ${modelName} - mmproj-F16"
+        echo "Download: ${model} - mmproj-F16"
 
-        if ! curl -fsSL "https://huggingface.co/${modelCompany}/${modelName}-GGUF/resolve/main/mmproj-F16.gguf" -o "${modelDir}/mmproj-F16.gguf"
+        if ! curl -fsSL "https://huggingface.co/cimo001/qwen/resolve/main/3.5/gguf/${sizeModel}/mmproj-F16.gguf" -o "${pathModel}mmproj-F16.gguf"
         then
-            echo "Skip ${modelName} - mmproj-F16: download failed."
+            echo "Skip ${model} - mmproj-F16: download failed."
 
-            rm -f "${modelDir}/mmproj-F16.gguf"
+            rm -f "${pathModel}mmproj-F16.gguf"
         fi
     fi
 done
@@ -65,9 +64,9 @@ done
 
 if [ "${DEVICE}" = "gpu" ]
 then
-    modelAssistant="${modelList[0]##*/}-Q4_0"
+    modelAssistant="${modelList[0]}-Q4_0"
 else
-    modelAssistant="${modelList[1]##*/}-Q4_0"
+    modelAssistant="${modelList[1]}-Q4_0"
 fi
 
 curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d "{\"model\": \"${modelAssistant}\"}" > /dev/null 2>&1
