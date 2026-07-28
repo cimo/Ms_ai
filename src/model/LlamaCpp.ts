@@ -1,4 +1,4 @@
-interface IapiResponseItem {
+interface IitemResponse {
     content: [
         {
             type: string;
@@ -7,7 +7,13 @@ interface IapiResponseItem {
     ];
 }
 
-export interface IapiDataResponseBody extends Record<string, unknown> {
+export interface IapiModelResponse {
+    data: {
+        id: string;
+    }[];
+}
+
+export interface IapiLlmBody extends Record<string, unknown> {
     stream: boolean;
     model: string;
     input: {
@@ -18,28 +24,9 @@ export interface IapiDataResponseBody extends Record<string, unknown> {
     temperature?: number;
 }
 
-export interface IapiModel {
-    data: {
-        id: string;
-    }[];
-}
-
-export interface IllmResponse {
+export interface IapiLlmResponse {
     type: string;
     response: {
-        output: IapiResponseItem[];
+        output: IitemResponse[];
     };
-}
-
-export interface IllmResponseTool {
-    result: IapiResponseItem;
-}
-
-export interface ItoolCall {
-    name: string;
-    argumentObject: Record<string, string>;
-}
-
-export interface ItaskCall {
-    list: ItoolCall[];
 }

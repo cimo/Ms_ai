@@ -4,10 +4,8 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
-import * as modelHelperSrc from "../model/HelperSrc.js";
 import * as modelLlamaCpp from "../model/LlamaCpp.js";
 import * as instanceEngine from "../InstanceEngine.js";
-import * as instanceMcp from "../InstanceMcp.js";
 
 export default class LlamaCpp {
     // Variable
@@ -24,7 +22,7 @@ export default class LlamaCpp {
 
     private modelAvailable = async (): Promise<string[]> => {
         return instanceEngine.api
-            .get<modelLlamaCpp.IapiModel>("/v1/models", {
+            .get<modelLlamaCpp.IapiModelResponse>("/v1/models", {
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -89,7 +87,7 @@ export default class LlamaCpp {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
-                const body = request.body as modelLlamaCpp.IapiDataResponseBody;
+                const body = request.body as modelLlamaCpp.IapiLlmBody;
 
                 if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
                     response.setHeader("Content-Type", "text/event-stream");
@@ -121,138 +119,11 @@ export default class LlamaCpp {
                             .then(async (resultApi) => {
                                 const decoder = new TextDecoder("utf-8");
                                 let buffer = "";
-                                let responseCompleted = "";
 
                                 while (true) {
                                     const { value, done } = await resultApi.read();
 
                                     if (done) {
-                                        if (helperSrc.jsonCheck(responseCompleted)) {
-                                            const responseCompletedObject = JSON.parse(responseCompleted) as
-                                                | modelLlamaCpp.ItoolCall
-                                                | modelLlamaCpp.ItaskCall;
-
-                                            if ("name" in responseCompletedObject) {
-                                                await instanceMcp.api
-                                                    .post<modelHelperSrc.IresponseBody>(
-                                                        "/api/tool-call",
-                                                        {
-                                                            headers: {
-                                                                "Content-Type": "application/json",
-                                                                "mcp-session-id": mcpSessionId,
-                                                                "mcp-cookie": mcpCookie
-                                                            }
-                                                        },
-                                                        {
-                                                            jsonrpc: "2.0",
-                                                            id: 1,
-                                                            method: "tools/call",
-                                                            params: {
-                                                                protocolVersion: "2025-06-18",
-                                                                capabilities: {},
-                                                                clientInfo: {
-                                                                    name: "curl",
-                                                                    version: "1.0"
-                                                                },
-                                                                name: responseCompletedObject.name,
-                                                                arguments: responseCompletedObject.argumentObject
-                                                            }
-                                                        }
-                                                    )
-                                                    .then((resultApiSub) => {
-                                                        const stdout = resultApiSub.data.response.stdout;
-
-                                                        let message = "";
-
-                                                        if (helperSrc.jsonCheck(stdout)) {
-                                                            const stdoutObject = JSON.parse(stdout) as modelLlamaCpp.IllmResponseTool;
-
-                                                            if (
-                                                                stdoutObject.result &&
-                                                                stdoutObject.result.content &&
-                                                                stdoutObject.result.content[0]
-                                                            ) {
-                                                                message = stdoutObject.result.content[0].text;
-                                                            }
-                                                        }
-
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "tool_response",
-                                                                response: {
-                                                                    name: responseCompletedObject.name,
-                                                                    arguments: JSON.stringify(responseCompletedObject.argumentObject),
-                                                                    message: message
-                                                                }
-                                                            })}\n\n`
-                                                        );
-                                                    })
-                                                    .catch((error: Error) => {
-                                                        helperSrc.writeLog(
-                                                            "LlamaCpp.ts - api(/api/response) - api(/api/tool-call) - catch()",
-                                                            error.message
-                                                        );
-
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "tool_response",
-                                                                response: {
-                                                                    message: error.message
-                                                                }
-                                                            })}\n\n`
-                                                        );
-
-                                                        reject(new Error(error.message));
-
-                                                        return;
-                                                    });
-                                            } else if ("list" in responseCompletedObject) {
-                                                await instanceMcp.api
-                                                    .post<modelHelperSrc.IresponseBody>(
-                                                        "/api/task-call",
-                                                        {
-                                                            headers: {
-                                                                "Content-Type": "application/json",
-                                                                "mcp-session-id": mcpSessionId,
-                                                                "mcp-cookie": mcpCookie
-                                                            }
-                                                        },
-                                                        JSON.stringify(responseCompletedObject)
-                                                    )
-                                                    .then((resultApiSub) => {
-                                                        const stdout = resultApiSub.data.response.stdout;
-
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "tool_response",
-                                                                response: {
-                                                                    message: stdout
-                                                                }
-                                                            })}\n\n`
-                                                        );
-                                                    })
-                                                    .catch((error: Error) => {
-                                                        helperSrc.writeLog(
-                                                            "LlamaCpp.ts - api(/api/response) - api(/api/task-call) - catch()",
-                                                            error.message
-                                                        );
-
-                                                        response.write(
-                                                            `data: ${JSON.stringify({
-                                                                type: "tool_response",
-                                                                response: {
-                                                                    message: error.message
-                                                                }
-                                                            })}\n\n`
-                                                        );
-
-                                                        reject(new Error(error.message));
-
-                                                        return;
-                                                    });
-                                            }
-                                        }
-
                                         response.end(
                                             `data: ${JSON.stringify({
                                                 type: "response.completed"
@@ -273,24 +144,6 @@ export default class LlamaCpp {
 
                                         if (line.startsWith("data:")) {
                                             const lineSlice = line.slice(5).trim();
-
-                                            if (lineSlice.length > 1 && lineSlice[0] === "{" && lineSlice[lineSlice.length - 1] === "}") {
-                                                const lineSliceObject = JSON.parse(lineSlice) as modelLlamaCpp.IllmResponse;
-
-                                                if (lineSliceObject.type === "response.completed") {
-                                                    const dataOutput = lineSliceObject.response.output[0];
-
-                                                    let text = "";
-
-                                                    if (dataOutput && dataOutput.content && dataOutput.content[0]) {
-                                                        text = dataOutput.content[0].text;
-                                                    }
-
-                                                    if (text) {
-                                                        responseCompleted = text.trim();
-                                                    }
-                                                }
-                                            }
 
                                             response.write(`data: ${lineSlice}\n\n`);
                                         }
