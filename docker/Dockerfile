@@ -117,6 +117,7 @@ RUN cd ~ \
     && dpkg -i cuda-keyring_1.1-1_all.deb \
     && apt-get update && apt-get install -y \
     cuda-runtime-13-2 \
+    libcudnn9-cuda-13 \
     # Clean
     && apt-get remove --purge -y sudo \
     && rm -rf /var/lib/apt/lists/* \
