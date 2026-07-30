@@ -116,10 +116,11 @@ RUN cd ~ \
     && curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb -o cuda-keyring_1.1-1_all.deb \
     && dpkg -i cuda-keyring_1.1-1_all.deb \
     && apt-get update && apt-get install -y \
-    cuda-runtime-13-2 \
+    cuda-libraries-13-2 \
     libcudnn9-cuda-13 \
     # Clean
     && apt-get remove --purge -y sudo \
+    && rm -f cuda-keyring_1.1-1_all.deb \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean -y \
     && apt-get autoclean -y \
