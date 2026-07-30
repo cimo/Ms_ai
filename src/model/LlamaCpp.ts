@@ -1,4 +1,4 @@
-interface IitemResponse {
+interface Ioutput {
     content: [
         {
             type: string;
@@ -27,6 +27,6 @@ export interface IapiLlmBody extends Record<string, unknown> {
 export interface IapiLlmResponse {
     type: string;
     response: {
-        output: IitemResponse[];
+        output: Ioutput[];
     };
 }
