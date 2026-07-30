@@ -5,7 +5,6 @@
         ".cache",
         ".config",
         ".cuda",
-        ".lmstudio",
         ".local",
         ".npm",
         ".nv",
@@ -18,7 +17,6 @@
         "public/asset/js",
         "public/asset/library",
         "public/asset/style",
-        ".lmstudio-home-pointer",
         "package-lock.json"
     ],
     "l13Diff.ignoreEndOfLine": false,
