@@ -48,9 +48,10 @@ COPY ./ ${PATH_ROOT}
 
 RUN cd ~ \
     # No root
-    && userdel -r ubuntu \
+    && userdel ubuntu \
+    && rm -rf /home/ubuntu \
     && groupadd -g 1000 node \
-    && useradd -m -u 1000 -g 1000 -d ${PATH_ROOT} -s /bin/bash node \
+    && useradd -M -u 1000 -g 1000 -d ${PATH_ROOT} -s /bin/bash node \
     && uid="$(id -u node)" \
     && mkdir -p ${PATH_ROOT} /home/node/ /run/user/${uid} /usr/lib/node_modules/npm/ \
     && chown -R node:node ${PATH_ROOT} /home/node/ /run/user/${uid} /usr/lib/node_modules/npm/ \
@@ -61,7 +62,8 @@ RUN cd ~ \
     && echo 'Acquire::http::No-Cache "true";' > /etc/apt/apt.conf.d/99no-cache \
     && echo 'Acquire::https::No-Cache "true";' >> /etc/apt/apt.conf.d/99no-cache \
     && VERSION_CODENAME=$(grep VERSION_CODENAME= /etc/os-release | cut -d= -f2) \
-    && chmod -R 0644 /usr/local/share/ca-certificates/ \
+    && find /usr/local/share/ca-certificates/ -type d -exec chmod 755 {} + \
+    && find /usr/local/share/ca-certificates/ -type f -exec chmod 644 {} + \
     && apt-get update && apt-get install -y ca-certificates tzdata curl media-types jq gettext-base \
     && update-ca-certificates \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone \
@@ -77,11 +79,17 @@ RUN cd ~ \
     && rm -rf /usr/lib/node_modules/npm/node_modules/tar \
     && mkdir -p /usr/lib/node_modules/npm/node_modules/tar \
     && curl -fsSL https://registry.npmjs.org/tar/-/tar-7.5.21.tgz | tar -xz --strip-components=1 -C /usr/lib/node_modules/npm/node_modules/tar \
+    && rm -rf /usr/lib/node_modules/npm/node_modules/ip-address \
+    && mkdir -p /usr/lib/node_modules/npm/node_modules/ip-address \
+    && curl -fsSL https://registry.npmjs.org/ip-address/-/ip-address-10.3.1.tgz | tar -xz --strip-components=1 -C /usr/lib/node_modules/npm/node_modules/ip-address \
+    && rm -rf /usr/lib/node_modules/npm/node_modules/undici \
+    && rm -rf /usr/lib/node_modules/npm/node_modules/node-gyp/node_modules/undici \
+    && mkdir -p /usr/lib/node_modules/npm/node_modules/node-gyp/node_modules/undici \
+    && curl -fsSL https://registry.npmjs.org/undici/-/undici-6.28.0.tgz | tar -xz --strip-components=1 -C /usr/lib/node_modules/npm/node_modules/node-gyp/node_modules/undici \
     # Wslg
-    && groupadd -g 110 render || true \
-    && groupadd -g 44 video || true \
-    && usermod -aG 110 node \
-    && usermod -aG 44 node \
+    && (getent group render >/dev/null || groupadd -g 110 render) \
+    && (getent group video >/dev/null || groupadd -g 44 video) \
+    && usermod -aG render,video node \
     && echo "<driconf></driconf>" > /etc/drirc \
     && apt-get update && apt-get install -y \
     libglib2.0-0 \
