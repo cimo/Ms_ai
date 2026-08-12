@@ -29,15 +29,15 @@ ENV NODE_EXTRA_CA_CERTS="${PATH_CERTIFICATE_PEM}"
 ENV NPM_CONFIG_USERCONFIG="/home/node/.npmrc"
 ENV WAYLAND_DISPLAY=wayland-0
 ENV XDG_SESSION_TYPE=wayland
-ENV XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir/"
+ENV XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir"
 ENV ELECTRON_ENABLE_WAYLAND=1
 ENV ELECTRON_OZONE_PLATFORM_HINT=auto
 ENV OZONE_PLATFORM=wayland
 ENV EGL_PLATFORM=wayland
 ENV ANGLE_DEFAULT_PLATFORM=egl
-ENV DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}bus"
+ENV DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
 ENV PULSE_SERVER="unix:/mnt/wslg/PulseServer"
-ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib/:/usr/local/cuda/lib64/:/usr/local/cuda-13.2/lib64/:${PATH_ROOT}llamaCpp/bin/"
+ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib:/usr/local/cuda/lib64:/usr/local/cuda-13.2/lib64:${PATH_ROOT}llamaCpp/bin:${LD_LIBRARY_PATH}"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
@@ -49,7 +49,7 @@ COPY ./ ${PATH_ROOT}
 RUN cd ~ \
     # No root
     && userdel ubuntu \
-    && rm -rf /home/ubuntu \
+    && rm -rf /home/ubuntu/ \
     && groupadd -g 1000 node \
     && useradd -M -u 1000 -g 1000 -d ${PATH_ROOT} -s /bin/bash node \
     && uid="$(id -u node)" \
@@ -97,7 +97,6 @@ RUN cd ~ \
     && (getent group render >/dev/null || groupadd -g 110 render) \
     && (getent group video >/dev/null || groupadd -g 44 video) \
     && usermod -aG render,video node \
-    && echo "<driconf></driconf>" > /etc/drirc \
     && apt-get update && apt-get install -y \
     libglib2.0-0 \
     libgtk-3-0 \
@@ -131,15 +130,16 @@ RUN cd ~ \
     libgomp1 \
     libatomic1 \
     xdg-utils \
-    # LlamaCpp
-    && apt-get update && apt-get install -y \
-    libopenblas0-pthread \
     # Cuda
+    && echo "<driconf></driconf>" > /etc/drirc \
     && curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb -o cuda-keyring_1.1-1_all.deb \
     && dpkg -i cuda-keyring_1.1-1_all.deb \
     && apt-get update && apt-get install -y \
     cuda-libraries-13-2 \
     libcudnn9-cuda-13 \
+    # LlamaCpp
+    && apt-get update && apt-get install -y \
+    libopenblas0-pthread \
     # Upgrade
     && apt-get update \
     && apt-get upgrade -y \
