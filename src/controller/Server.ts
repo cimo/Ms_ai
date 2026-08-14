@@ -99,10 +99,10 @@ export default class Server {
             helperSrc.writeLog("Server.ts - createServer() - listen() - Port", helperSrc.SERVER_PORT);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                if (request.accepts("html")) {
-                    response.sendFile(`${helperSrc.PATH_ROOT}${helperSrc.PATH_PUBLIC}index.html`);
-                } else {
+                if (!request.accepts("html")) {
                     response.status(404).send("/: html not found!");
+                } else {
+                    response.sendFile(`${helperSrc.PATH_ROOT}${helperSrc.PATH_PUBLIC}index.html`);
                 }
             });
 
@@ -115,12 +115,12 @@ export default class Server {
 
                 const bearerToken = helperSrc.headerBearerToken(request);
 
-                if (bearerToken) {
+                if (!bearerToken) {
+                    helperSrc.responseBody("", "ko", response, 500);
+                } else {
                     const result = await controllerMicrosoft.loginWithAuthenticationCode(bearerToken);
 
                     helperSrc.responseBody(result, "", response, 200);
-                } else {
-                    helperSrc.responseBody("", "ko", response, 500);
                 }
             });
 
@@ -131,12 +131,12 @@ export default class Server {
 
                 const bearerToken = helperSrc.headerBearerToken(request);
 
-                if (bearerToken) {
+                if (!bearerToken) {
+                    helperSrc.responseBody("", "ko", response, 500);
+                } else {
                     delete this.userObject[bearerToken];
 
                     helperSrc.responseBody("ok", "", response, 200);
-                } else {
-                    helperSrc.responseBody("", "ko", response, 500);
                 }
             });
         });

@@ -65,7 +65,9 @@ export default class Microsoft {
     loginWithAuthenticationCode = async (bearerToken: string): Promise<string> => {
         let result = "";
 
-        if (AD_URL_LOGIN && AD_URL_REDIRECT && AD_SCOPE && AD_TENANT && AD_CLIENT && AD_CLIENT_KEY) {
+        if (!AD_URL_LOGIN || !AD_URL_REDIRECT || !AD_SCOPE || !AD_TENANT || !AD_CLIENT || !AD_CLIENT_KEY) {
+            result = `Warning: Configure '${ENV_NAME}.microsoft.env' and '${ENV_NAME}.secret.microsoft.env' file.`;
+        } else {
             const { verifier: codeVerifier, challenge: codeChallenge } = this.generatePkceCode();
 
             const parameterObject: AuthorizationUrlRequest = {
@@ -80,8 +82,6 @@ export default class Microsoft {
             const cca = new ConfidentialClientApplication(this.configurationObject);
 
             result = await cca.getAuthCodeUrl(parameterObject);
-        } else {
-            result = `Warning: Configure '${ENV_NAME}.microsoft.env' and '${ENV_NAME}.secret.microsoft.env' file.`;
         }
 
         return result;
@@ -124,7 +124,11 @@ export default class Microsoft {
             const code = request.query["code"];
             const state = request.query["state"];
 
-            if (typeof code === "string" && typeof state === "string") {
+            if (typeof code !== "string" || typeof state !== "string") {
+                helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - Error", "Missing or invalid query parameters.");
+
+                helperSrc.responseBody("", "ko", response, 500);
+            } else {
                 this.codeToToken(code, state)
                     .then((result) => {
                         this.userObject[result.bearerToken] = {
@@ -140,22 +144,18 @@ export default class Microsoft {
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
-            } else {
-                helperSrc.writeLog("Microsoft.ts - api(/ms-ai-redirect) - Error", "Missing or invalid query parameters.");
-
-                helperSrc.responseBody("", "ko", response, 500);
             }
         });
 
         this.app.get("/ms-ai-verify", this.limiter, (request: Request, response: Response) => {
             const username = request.query["username"];
 
-            if (typeof username === "string" && username in this.userObject) {
-                helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
-            } else {
+            if (typeof username !== "string" || !(username in this.userObject)) {
                 helperSrc.writeLog("Microsoft.ts - api(/ms-ai-verify) - Error", "User not found or invalid.");
 
                 helperSrc.responseBody("", "ko", response, 500);
+            } else {
+                helperSrc.responseBody(this.userObject[username].accessToken, "", response, 200);
             }
         });
     };

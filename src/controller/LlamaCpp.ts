@@ -11,13 +11,11 @@ export default class LlamaCpp {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
-    private modelId: string;
 
     // Method
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
-        this.modelId = "";
     }
 
     private modelAvailable = async (): Promise<string[]> => {
@@ -44,8 +42,6 @@ export default class LlamaCpp {
 
                 const resultList = [...cleanedList].sort((a, b) => a.localeCompare(b));
 
-                this.modelId = resultList[0];
-
                 return resultList;
             })
             .catch((error: Error) => {
@@ -61,7 +57,11 @@ export default class LlamaCpp {
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
-            if (bearerToken) {
+            if (!bearerToken) {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
+            } else {
                 this.modelAvailable()
                     .then((resultApiList) => {
                         const resultList = resultApiList;
@@ -73,23 +73,27 @@ export default class LlamaCpp {
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
-            } else {
-                helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - Error", "Missing or invalid token.");
-
-                helperSrc.responseBody("", "ko", response, 500);
             }
         });
 
         this.app.post("/api/response", Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
-            if (bearerToken) {
+            if (!bearerToken) {
+                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid token.");
+
+                helperSrc.responseBody("", "ko", response, 500);
+            } else {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
                 const body = request.body as modelLlamaCpp.IapiLlmBody;
 
-                if (typeof mcpSessionId === "string" && typeof mcpCookie === "string" && typeof aiCookie === "string") {
+                if (typeof mcpSessionId !== "string" || typeof mcpCookie !== "string" || typeof aiCookie !== "string") {
+                    helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid header.");
+
+                    helperSrc.responseBody("", "ko", response, 500);
+                } else {
                     response.setHeader("Content-Type", "text/event-stream");
                     response.setHeader("Cache-Control", "no-cache");
                     response.setHeader("Connection", "keep-alive");
@@ -173,15 +177,7 @@ export default class LlamaCpp {
                                 return;
                             });
                     });
-                } else {
-                    helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid header.");
-
-                    helperSrc.responseBody("", "ko", response, 500);
                 }
-            } else {
-                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid token.");
-
-                helperSrc.responseBody("", "ko", response, 500);
             }
         });
     };
