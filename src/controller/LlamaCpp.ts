@@ -52,8 +52,6 @@ export default class LlamaCpp {
     };
 
     api = (): void => {
-        this.modelAvailable();
-
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
             const bearerToken = helperSrc.headerBearerToken(request);
 
