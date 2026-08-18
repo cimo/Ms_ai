@@ -57,7 +57,7 @@ envsubst '${pathEngineModel}' < "${pathEngineModel}preset_local_${DEVICE}.ini.te
 
 tail -f "${PATH_ROOT}${MS_AI_PATH_LOG}llamaCpp.log" > "/dev/null" 2>&1 &
 
-until curl -fsSL "${MS_AI_URL_ENGINE}/health" > "/dev/null" 2>&1
+until curl -fsSL --cacert "${MS_AI_PATH_CERTIFICATE_PEM}" "${MS_AI_URL_ENGINE}/health" > "/dev/null" 2>&1
 do
     sleep 3
 done
@@ -69,6 +69,6 @@ else
     modelAssistant="${modelList[1]}-Q4_0"
 fi
 
-curl -fsSL "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d "{\"model\": \"${modelAssistant}\"}" > "/dev/null" 2>&1
+curl -fsSL --cacert "${MS_AI_PATH_CERTIFICATE_PEM}" "${MS_AI_URL_ENGINE}/models/load" -H "Content-Type: application/json" -d "{\"model\": \"${modelAssistant}\"}" > "/dev/null" 2>&1
 
 echo "Engine ready."
