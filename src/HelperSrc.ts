@@ -413,7 +413,7 @@ export const fileDetail = async (value: string, buffer?: Uint8Array, isOnlyByte 
             if (isMatched) {
                 resultObject = {
                     ...resultObject,
-                    fileName: fileNameWithExtension,
+                    name: fileNameWithExtension,
                     baseName,
                     mimeType: signatureList[a].mimeType,
                     extension: signatureList[a].extension,
@@ -432,7 +432,7 @@ export const fileDetail = async (value: string, buffer?: Uint8Array, isOnlyByte 
             if (signatureList[a].extension === extension) {
                 resultObject = {
                     ...resultObject,
-                    fileName: fileNameWithExtension,
+                    name: fileNameWithExtension,
                     baseName,
                     mimeType: signatureList[a].mimeType,
                     extension: signatureList[a].extension,
@@ -536,6 +536,37 @@ export const fileOrFolderMove = (pathCurrent: string, pathTarget: string): Promi
             }
 
             resolve(true);
+        });
+    });
+};
+
+export const fileOrFolderRename = (
+    pathOld: string,
+    pathNew: string,
+    fileNameOld?: string,
+    fileNameNew?: string
+): Promise<boolean | NodeJS.ErrnoException> => {
+    return new Promise((resolve) => {
+        Fs.rename(pathOld, pathNew, (error) => {
+            if (error) {
+                resolve(error);
+
+                return;
+            }
+
+            if (fileNameOld === undefined || fileNameNew === undefined) {
+                resolve(true);
+            } else {
+                Fs.rename(`${pathNew}${fileNameOld}`, `${pathNew}${fileNameNew}`, (error) => {
+                    if (error) {
+                        resolve(error);
+
+                        return;
+                    }
+
+                    resolve(true);
+                });
+            }
         });
     });
 };
@@ -668,7 +699,7 @@ export const readFirstLevelRecursive = (path: string, extension: string, pathPre
                     Fs.stat(pathData, (errorStat, statData) => {
                         if (!errorStat && statData.isDirectory()) {
                             if (!pathPrevious) {
-                                resultList.push(pathData);
+                                resultList.push(`${pathData}/`);
 
                                 readFirstLevelRecursive(`${pathData}/`, extension, path).then((dataSubList) => {
                                     for (let a = 0; a < dataSubList.length; a++) {
