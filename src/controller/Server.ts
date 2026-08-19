@@ -10,7 +10,7 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 // Source
 import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
-import ControllerLlamaCpp from "./LlamaCpp.js";
+import ControllerService from "./Service.js";
 import ControllerMicrosoft from "./Microsoft.js";
 
 export default class Server {
@@ -90,8 +90,8 @@ export default class Server {
         const server = creation;
 
         server.listen(helperSrc.SERVER_PORT, () => {
-            const controllerLlamaCpp = new ControllerLlamaCpp(this.app, this.limiter);
-            controllerLlamaCpp.api();
+            const controllerService = new ControllerService(this.app, this.limiter);
+            controllerService.api();
 
             const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
             controllerMicrosoft.api();

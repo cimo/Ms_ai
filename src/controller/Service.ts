@@ -4,10 +4,10 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
-import * as modelLlamaCpp from "../model/LlamaCpp.js";
+import * as modelService from "../model/Service.js";
 import * as instanceEngine from "../InstanceEngine.js";
 
-export default class LlamaCpp {
+export default class Service {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
@@ -20,7 +20,7 @@ export default class LlamaCpp {
 
     private modelAvailable = async (): Promise<string[]> => {
         return instanceEngine.api
-            .get<modelLlamaCpp.IapiModelResponse>("/v1/models", {
+            .get<modelService.IapiModelResponse>("/v1/models", {
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -45,7 +45,7 @@ export default class LlamaCpp {
                 return resultList;
             })
             .catch((error: Error) => {
-                helperSrc.writeLog("LlamaCpp.ts - /v1/models - catch()", error.message);
+                helperSrc.writeLog("Service.ts - /v1/models - catch()", error.message);
 
                 return [];
             });
@@ -56,7 +56,7 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (!bearerToken) {
-                helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - Error", "Missing or invalid token.");
+                helperSrc.writeLog("Service.ts - api(/api/model) - Error", "Missing or invalid token.");
 
                 helperSrc.responseBody("", "ko", response, 500);
             } else {
@@ -67,7 +67,7 @@ export default class LlamaCpp {
                         helperSrc.responseBody(JSON.stringify(resultList), "", response, 200);
                     })
                     .catch((error: Error) => {
-                        helperSrc.writeLog("LlamaCpp.ts - api(/api/model) - catch()", error.message);
+                        helperSrc.writeLog("Service.ts - api(/api/model) - catch()", error.message);
 
                         helperSrc.responseBody("", "ko", response, 500);
                     });
@@ -78,17 +78,17 @@ export default class LlamaCpp {
             const bearerToken = helperSrc.headerBearerToken(request);
 
             if (!bearerToken) {
-                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid token.");
+                helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid token.");
 
                 helperSrc.responseBody("", "ko", response, 500);
             } else {
                 const mcpSessionId = request.headers["mcp-session-id"];
                 const mcpCookie = request.headers["mcp-cookie"];
                 const aiCookie = request.headers["ai-cookie"];
-                const body = request.body as modelLlamaCpp.IapiLlmBody;
+                const body = request.body as modelService.IapiLlmBody;
 
                 if (typeof mcpSessionId !== "string" || typeof mcpCookie !== "string" || typeof aiCookie !== "string") {
-                    helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - Error", "Missing or invalid header.");
+                    helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid header.");
 
                     helperSrc.responseBody("", "ko", response, 500);
                 } else {
@@ -159,7 +159,7 @@ export default class LlamaCpp {
                                     return;
                                 }
 
-                                helperSrc.writeLog("LlamaCpp.ts - api(/api/response) - catch()", error.message);
+                                helperSrc.writeLog("Service.ts - api(/api/response) - catch()", error.message);
 
                                 response.end(
                                     `data: ${JSON.stringify({
