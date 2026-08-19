@@ -191,7 +191,31 @@ export const jsonCheck = (value: string): boolean => {
     }
 };
 
-export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true): modelHelperSrc.IfileDetail => {
+export const fileCheckMimeType = (value: string): boolean => {
+    if (!MIME_TYPE.includes(value)) {
+        return false;
+    }
+
+    return true;
+};
+
+export const fileCheckSize = (byte: number): boolean => {
+    const fileSizeMb = parseInt(FILE_SIZE_MB);
+
+    if (isNaN(fileSizeMb)) {
+        return false;
+    }
+
+    const maxSizeByte = fileSizeMb * 1024 * 1024;
+
+    if (byte > maxSizeByte) {
+        return false;
+    }
+
+    return true;
+};
+
+export const fileDetail = async (value: string, buffer?: Uint8Array, isOnlyByte = true): Promise<modelHelperSrc.IfileDetail> => {
     let resultObject = {} as modelHelperSrc.IfileDetail;
 
     if (!value) {
@@ -201,14 +225,22 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
     const fileNameWithExtension = value.includes("/") ? value.split("/").pop()! : value;
     const baseName = fileNameWithExtension.trim().replace(/\.[^/.]+$/, "");
 
-    if (value.includes("/") && Fs.existsSync(value)) {
-        const stat = Fs.statSync(value);
+    if (value.includes("/")) {
+        resultObject = await new Promise<modelHelperSrc.IfileDetail>((resolve) => {
+            Fs.stat(value, (error, stats) => {
+                if (error) {
+                    resolve(resultObject);
 
-        resultObject = {
-            ...resultObject,
-            size: fileSize(stat.size, isOnlyByte),
-            dateModified: localeFormat(stat.mtime) || ""
-        };
+                    return;
+                }
+
+                resolve({
+                    ...resultObject,
+                    size: fileSize(stats.size, isOnlyByte),
+                    dateModified: localeFormat(stats.mtime) || ""
+                });
+            });
+        });
     }
 
     const signatureList: modelHelperSrc.IfileDetailSignature[] = [
@@ -415,30 +447,6 @@ export const fileDetail = (value: string, buffer?: Uint8Array, isOnlyByte = true
     return resultObject;
 };
 
-export const fileCheckMimeType = (value: string): boolean => {
-    if (!MIME_TYPE.includes(value)) {
-        return false;
-    }
-
-    return true;
-};
-
-export const fileCheckSize = (byte: number): boolean => {
-    const fileSizeMb = parseInt(FILE_SIZE_MB);
-
-    if (isNaN(fileSizeMb)) {
-        return false;
-    }
-
-    const maxSizeByte = fileSizeMb * 1024 * 1024;
-
-    if (byte > maxSizeByte) {
-        return false;
-    }
-
-    return true;
-};
-
 export const fileWriteStream = (pathFile: string, buffer: Buffer): Promise<boolean | NodeJS.ErrnoException> => {
     return new Promise((resolve) => {
         Fs.mkdir(Path.dirname(pathFile), { recursive: true }, (error) => {
@@ -610,7 +618,7 @@ export const findPathFileRecursive = (path: string, extension: string): Promise<
 export const findPathDirnameRecursive = async (path: string, fileName: string): Promise<string> => {
     let result = "";
 
-    const detail = fileDetail(fileName);
+    const detail = await fileDetail(fileName);
 
     const pathFileList = await findPathFileRecursive(path, detail.extension);
 
