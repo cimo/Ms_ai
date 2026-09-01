@@ -10,8 +10,3 @@ export interface Icors {
 export interface Irequest extends Request {
     clientIp?: string | undefined;
 }
-
-export interface Iuser {
-    username: string;
-    accessToken: string;
-}

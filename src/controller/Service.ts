@@ -52,130 +52,112 @@ export default class Service {
     };
 
     api = (): void => {
-        this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-            const bearerToken = helperSrc.headerBearerToken(request);
+        this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (_: Request, response: Response) => {
+            this.modelAvailable()
+                .then((resultApiList) => {
+                    const resultList = resultApiList;
 
-            if (!bearerToken) {
-                helperSrc.writeLog("Service.ts - api(/api/model) - Error", "Missing or invalid token.");
+                    helperSrc.responseBody({ state: "ok", message: "", data: resultList }, response, 200);
+                })
+                .catch((error: Error) => {
+                    helperSrc.writeLog("Service.ts - api(/api/model) - catch()", error.message);
 
-                helperSrc.responseBody("", "ko", response, 500);
-            } else {
-                this.modelAvailable()
-                    .then((resultApiList) => {
-                        const resultList = resultApiList;
-
-                        helperSrc.responseBody(JSON.stringify(resultList), "", response, 200);
-                    })
-                    .catch((error: Error) => {
-                        helperSrc.writeLog("Service.ts - api(/api/model) - catch()", error.message);
-
-                        helperSrc.responseBody("", "ko", response, 500);
-                    });
-            }
+                    helperSrc.responseBody({ state: "ko", message: "Failed to get model list." }, response, 500);
+                });
         });
 
         this.app.post("/api/response", Ca.authenticationMiddleware, (request: Request, response: Response) => {
-            const bearerToken = helperSrc.headerBearerToken(request);
+            const aiCookie = request.headers["ai-cookie"];
+            const body = request.body as modelService.IapiLlmBody;
 
-            if (!bearerToken) {
-                helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid token.");
+            if (typeof aiCookie !== "string") {
+                helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid header.");
 
-                helperSrc.responseBody("", "ko", response, 500);
+                helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
             } else {
-                const mcpSessionId = request.headers["mcp-session-id"];
-                const mcpCookie = request.headers["mcp-cookie"];
-                const aiCookie = request.headers["ai-cookie"];
-                const body = request.body as modelService.IapiLlmBody;
+                response.setHeader("Content-Type", "text/event-stream");
+                response.setHeader("Cache-Control", "no-cache");
+                response.setHeader("Connection", "keep-alive");
+                response.setHeader("X-Accel-Buffering", "no");
 
-                if (typeof mcpSessionId !== "string" || typeof mcpCookie !== "string" || typeof aiCookie !== "string") {
-                    helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid header.");
+                const abortControllerEngine = new AbortController();
 
-                    helperSrc.responseBody("", "ko", response, 500);
-                } else {
-                    response.setHeader("Content-Type", "text/event-stream");
-                    response.setHeader("Cache-Control", "no-cache");
-                    response.setHeader("Connection", "keep-alive");
-                    response.setHeader("X-Accel-Buffering", "no");
+                response.on("close", () => {
+                    if (!response.writableEnded) {
+                        abortControllerEngine.abort();
+                    }
+                });
 
-                    const abortControllerEngine = new AbortController();
-
-                    response.on("close", () => {
-                        if (!response.writableEnded) {
-                            abortControllerEngine.abort();
-                        }
-                    });
-
-                    return new Promise((resolve, reject) => {
-                        instanceEngine.api
-                            .stream(
-                                "/v1/responses",
-                                {
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        "ai-cookie": aiCookie
-                                    },
-                                    signal: abortControllerEngine.signal
+                return new Promise((resolve, reject) => {
+                    instanceEngine.api
+                        .stream(
+                            "/v1/responses",
+                            {
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "ai-cookie": aiCookie
                                 },
-                                body
-                            )
-                            .then(async (resultApi) => {
-                                const decoder = new TextDecoder("utf-8");
-                                let buffer = "";
+                                signal: abortControllerEngine.signal
+                            },
+                            body
+                        )
+                        .then(async (resultApi) => {
+                            const decoder = new TextDecoder("utf-8");
+                            let buffer = "";
 
-                                while (true) {
-                                    const { value, done } = await resultApi.read();
+                            while (true) {
+                                const { value, done } = await resultApi.read();
 
-                                    if (done) {
-                                        response.end(
-                                            `data: ${JSON.stringify({
-                                                type: "response.completed"
-                                            })}\n\n`
-                                        );
+                                if (done) {
+                                    response.end(
+                                        `data: ${JSON.stringify({
+                                            type: "response.completed"
+                                        })}\n\n`
+                                    );
 
-                                        resolve("");
-
-                                        return;
-                                    }
-
-                                    buffer += decoder.decode(value, { stream: true });
-                                    const bufferSplit = buffer.split(/\r?\n/);
-                                    buffer = bufferSplit.pop() as string;
-
-                                    for (let a = 0; a < bufferSplit.length; a++) {
-                                        const line = bufferSplit[a];
-
-                                        if (line.startsWith("data:")) {
-                                            const lineSlice = line.slice(5).trim();
-
-                                            response.write(`data: ${lineSlice}\n\n`);
-                                        }
-                                    }
-                                }
-                            })
-                            .catch((error: Error) => {
-                                if (abortControllerEngine.signal.aborted) {
                                     resolve("");
 
                                     return;
                                 }
 
-                                helperSrc.writeLog("Service.ts - api(/api/response) - catch()", error.message);
+                                buffer += decoder.decode(value, { stream: true });
+                                const bufferSplit = buffer.split(/\r?\n/);
+                                buffer = bufferSplit.pop() as string;
 
-                                response.end(
-                                    `data: ${JSON.stringify({
-                                        type: "error",
-                                        error: {
-                                            message: error.message
-                                        }
-                                    })}\n\n`
-                                );
+                                for (let a = 0; a < bufferSplit.length; a++) {
+                                    const line = bufferSplit[a];
 
-                                reject(new Error(error.message));
+                                    if (line.startsWith("data:")) {
+                                        const lineSlice = line.slice(5).trim();
+
+                                        response.write(`data: ${lineSlice}\n\n`);
+                                    }
+                                }
+                            }
+                        })
+                        .catch((error: Error) => {
+                            if (abortControllerEngine.signal.aborted) {
+                                resolve("");
 
                                 return;
-                            });
-                    });
-                }
+                            }
+
+                            helperSrc.writeLog("Service.ts - api(/api/response) - catch()", error.message);
+
+                            response.end(
+                                `data: ${JSON.stringify({
+                                    type: "error",
+                                    error: {
+                                        message: error.message
+                                    }
+                                })}\n\n`
+                            );
+
+                            reject(new Error(error.message));
+
+                            return;
+                        });
+                });
             }
         });
     };

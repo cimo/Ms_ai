@@ -11,14 +11,12 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 import * as helperSrc from "../HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import ControllerService from "./Service.js";
-import ControllerMicrosoft from "./Microsoft.js";
 
 export default class Server {
     // Variable
     private corsOption: modelServer.Icors;
     private limiter: RateLimitRequestHandler;
     private app: Express.Express;
-    private userObject: Record<string, modelServer.Iuser>;
 
     // Method
     constructor() {
@@ -38,8 +36,6 @@ export default class Server {
                 return helperSrc.headerClientIp(request).split(":").pop() as string;
             }
         });
-
-        this.userObject = {};
 
         this.app = Express();
     }
@@ -93,9 +89,6 @@ export default class Server {
             const controllerService = new ControllerService(this.app, this.limiter);
             controllerService.api();
 
-            const controllerMicrosoft = new ControllerMicrosoft(this.app, this.limiter, this.userObject);
-            controllerMicrosoft.api();
-
             helperSrc.writeLog("Server.ts - createServer() - listen() - Port", helperSrc.SERVER_PORT);
 
             this.app.get("/", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
@@ -107,37 +100,19 @@ export default class Server {
             });
 
             this.app.get("/info", (request: modelServer.Irequest, response: Response) => {
-                helperSrc.responseBody(`Client ip: ${request.clientIp || ""}`, "", response, 200);
+                helperSrc.responseBody({ state: "ok", message: "", data: `Client ip: ${request.clientIp || ""}` }, response, 200);
             });
 
-            this.app.get("/login", this.limiter, async (request: Request, response: Response) => {
+            this.app.get("/login", this.limiter, async (_: Request, response: Response) => {
                 Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
 
-                const bearerToken = helperSrc.headerBearerToken(request);
-
-                if (!bearerToken) {
-                    helperSrc.responseBody("", "ko", response, 500);
-                } else {
-                    const result = await controllerMicrosoft.loginWithAuthenticationCode(bearerToken);
-
-                    helperSrc.responseBody(result, "", response, 200);
-                }
+                helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
             });
 
             this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                controllerMicrosoft.logout();
-
                 Ca.deleteCookie(`${helperSrc.LABEL}_authentication`, request, response);
 
-                const bearerToken = helperSrc.headerBearerToken(request);
-
-                if (!bearerToken) {
-                    helperSrc.responseBody("", "ko", response, 500);
-                } else {
-                    delete this.userObject[bearerToken];
-
-                    helperSrc.responseBody("ok", "", response, 200);
-                }
+                helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
             });
         });
     };
