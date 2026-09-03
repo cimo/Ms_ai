@@ -100,7 +100,7 @@ export default class Server {
             });
 
             this.app.get("/info", (request: modelServer.Irequest, response: Response) => {
-                helperSrc.responseBody({ state: "ok", message: "", data: `Client ip: ${request.clientIp || ""}` }, response, 200);
+                helperSrc.responseBody({ state: "ok", message: `Client ip: ${request.clientIp || ""}` }, response, 200);
             });
 
             this.app.get("/login", this.limiter, async (_: Request, response: Response) => {
