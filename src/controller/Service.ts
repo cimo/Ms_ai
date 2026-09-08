@@ -5,7 +5,7 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 // Source
 import * as helperSrc from "../HelperSrc.js";
 import * as modelService from "../model/Service.js";
-import * as instanceEngine from "../InstanceEngine.js";
+import * as instance from "../Instance.js";
 
 export default class Service {
     // Variable
@@ -19,7 +19,7 @@ export default class Service {
     }
 
     private modelAvailable = async (): Promise<string[]> => {
-        return instanceEngine.api
+        return instance.api
             .get<modelService.IapiModelResponse>("/v1/models", {
                 headers: {
                     "Content-Type": "application/json"
@@ -89,7 +89,7 @@ export default class Service {
                 });
 
                 return new Promise((resolve, reject) => {
-                    instanceEngine.api
+                    instance.api
                         .stream(
                             "/v1/responses",
                             {
