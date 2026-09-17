@@ -41,6 +41,8 @@ export default class Server {
     }
 
     createSetting = (): void => {
+        Ca.setCookieNameCustom("ai-cookie");
+
         this.app.set("trust proxy", "loopback");
         this.app.use(Express.json());
         this.app.use(Express.urlencoded({ extended: true }));
