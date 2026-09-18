@@ -51,7 +51,58 @@ export default class Service {
             });
     };
 
+    private tokenCount = async (model: string, text: string): Promise<number> => {
+        return instance.api
+            .post<modelService.IapiTokenizeResponse>(
+                "/tokenize",
+                {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                },
+                { model, content: text }
+            )
+            .then((resultApi) => {
+                return resultApi.data.tokens.length;
+            })
+            .catch((error: Error) => {
+                helperSrc.writeLog("Service.ts - /tokenize - catch()", error.message);
+
+                return -1;
+            });
+    };
+
+    private contextSize = async (model: string): Promise<number> => {
+        return instance.api
+            .get<modelService.IapiPropsResponse>(`/props?model=${encodeURIComponent(model)}`, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((resultApi) => {
+                return resultApi.data.default_generation_settings.n_ctx;
+            })
+            .catch((error: Error) => {
+                helperSrc.writeLog("Service.ts - /props - catch()", error.message);
+
+                return -1;
+            });
+    };
+
     api = (): void => {
+        this.app.post("/api/token-detail", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
+            const body = request.body as modelService.IapiTokenDetailBody;
+
+            const count = await this.tokenCount(body.model, body.text);
+            const contextSize = await this.contextSize(body.model);
+
+            if (count === -1 || contextSize === -1) {
+                helperSrc.responseBody({ state: "ko", message: "Engine not available." }, response, 200);
+            } else {
+                helperSrc.responseBody({ state: "ok", message: "", data: { count, contextSize } }, response, 200);
+            }
+        });
+
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (_: Request, response: Response) => {
             this.modelAvailable()
                 .then((resultApiList) => {

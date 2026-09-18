@@ -31,6 +31,21 @@ export interface IapiLlmResponse {
     };
 }
 
+export interface IapiTokenDetailBody {
+    model: string;
+    text: string;
+}
+
+export interface IapiTokenizeResponse {
+    tokens: number[];
+}
+
+export interface IapiPropsResponse {
+    default_generation_settings: {
+        n_ctx: number;
+    };
+}
+
 export interface IapiEngineError {
     error?: {
         message: string;
