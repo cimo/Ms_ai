@@ -30,3 +30,9 @@ export interface IapiLlmResponse {
         output: Ioutput[];
     };
 }
+
+export interface IapiEngineError {
+    error?: {
+        message: string;
+    };
+}

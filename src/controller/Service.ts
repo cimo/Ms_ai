@@ -109,6 +109,29 @@ export default class Service {
                                 const { value, done } = await resultApi.read();
 
                                 if (done) {
+                                    const bufferTrim = buffer.trim();
+
+                                    if (bufferTrim !== "" && helperSrc.jsonCheck(bufferTrim)) {
+                                        const bufferObject = JSON.parse(bufferTrim) as modelService.IapiEngineError;
+
+                                        if (bufferObject.error) {
+                                            helperSrc.writeLog("Service.ts - api(/api/response) - stream()", bufferObject.error.message);
+
+                                            response.end(
+                                                `data: ${JSON.stringify({
+                                                    type: "error",
+                                                    error: {
+                                                        message: bufferObject.error.message
+                                                    }
+                                                })}\n\n`
+                                            );
+
+                                            resolve("");
+
+                                            return;
+                                        }
+                                    }
+
                                     response.end(
                                         `data: ${JSON.stringify({
                                             type: "response.completed"
