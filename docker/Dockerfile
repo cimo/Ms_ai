@@ -27,6 +27,7 @@ ENV HISTFILE="/home/node/.bash_history"
 ENV NODE_OPTIONS=--use-openssl-ca
 ENV NODE_EXTRA_CA_CERTS="${PATH_CERTIFICATE_PEM}"
 ENV NPM_CONFIG_USERCONFIG="/home/node/.npmrc"
+ENV PATH="${PATH_ROOT}.local/bin:${PATH}"
 ENV WAYLAND_DISPLAY=wayland-0
 ENV XDG_SESSION_TYPE=wayland
 ENV XDG_RUNTIME_DIR="/mnt/wslg/runtime-dir"
@@ -140,6 +141,8 @@ RUN cd ~ \
     # LlamaCpp
     && apt-get update && apt-get install -y \
     libopenblas0-pthread \
+    # Claude code
+    && curl -fsSL https://claude.ai/install.sh | bash \
     # Upgrade
     && apt-get update \
     && apt-get upgrade -y \

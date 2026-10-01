@@ -37,6 +37,8 @@ certificate/**
 !certificate/custom/.gitkeep
 !certificate/proxy/.gitkeep
 dist
+file/input/*
+!file/input/.gitkeep
 llamaCpp/model/*
 !llamaCpp/model/.gitkeep
 !llamaCpp/model/preset_local_cpu.ini.template

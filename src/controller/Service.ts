@@ -4,18 +4,22 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
+import * as modelHelperSrc from "../model/HelperSrc.js";
 import * as modelService from "../model/Service.js";
 import * as instance from "../Instance.js";
+import Anthropic from "./Anthropic.js";
 
 export default class Service {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
+    private anthropic: Anthropic;
 
     // Method
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
+        this.anthropic = new Anthropic();
     }
 
     private modelAvailable = async (): Promise<string[]> => {
@@ -232,6 +236,37 @@ export default class Service {
                             return;
                         });
                 });
+            }
+        });
+
+        this.app.post("/api/anthropic-cli", Ca.authenticationMiddleware, async (request: Request, response: Response) => {
+            const aiCookie = request.headers["ai-cookie"];
+            const mcpSessionId = request.headers["mcp-session-id"];
+            const body = request.body as modelService.IapiAnthropicCliBody;
+
+            const code = body.code;
+            const model = body.model;
+            const systemPrompt = body.systemPrompt;
+            const userPrompt = body.userPrompt;
+
+            if (typeof aiCookie !== "string" || typeof mcpSessionId !== "string") {
+                helperSrc.writeLog("Service.ts - api(/api/anthropic-cli) - Error", "Missing or invalid header.");
+
+                helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
+            } else {
+                let resultObject = {} as modelHelperSrc.IactionOperation;
+
+                if (!model || !systemPrompt || !userPrompt) {
+                    resultObject = await this.anthropic.authentication(mcpSessionId, code);
+                } else {
+                    resultObject = await this.anthropic.command(mcpSessionId, model, systemPrompt, userPrompt);
+                }
+
+                if (resultObject.state === "ko") {
+                    helperSrc.responseBody({ state: "ko", message: resultObject.message }, response, 500);
+                } else {
+                    helperSrc.responseBody({ state: "ok", message: resultObject.message, data: resultObject.data }, response, 200);
+                }
             }
         });
     };

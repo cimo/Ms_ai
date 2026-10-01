@@ -113,10 +113,20 @@ export default class Server {
                 helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
             });
 
-            this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, (request: Request, response: Response) => {
-                Ca.deleteCookie(`${helperSrc.LABEL}_authentication`, request, response);
+            this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
+                const mcpSessionId = request.headers["mcp-session-id"];
 
-                helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
+                if (typeof mcpSessionId !== "string") {
+                    helperSrc.writeLog("Server.ts - api(/logout) - Error", "Missing or invalid header.");
+
+                    helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
+                } else {
+                    await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`);
+
+                    Ca.deleteCookie(`${helperSrc.LABEL}_authentication`, request, response);
+
+                    helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
+                }
             });
         });
     };

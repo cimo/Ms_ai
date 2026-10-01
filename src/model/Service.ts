@@ -24,6 +24,13 @@ export interface IapiLlmBody extends Record<string, unknown> {
     temperature?: number;
 }
 
+export interface IapiAnthropicCliBody {
+    code?: string;
+    model?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+}
+
 export interface IapiLlmResponse {
     type: string;
     response: {
