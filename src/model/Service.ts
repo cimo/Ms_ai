@@ -24,6 +24,10 @@ export interface IapiLlmBody extends Record<string, unknown> {
     temperature?: number;
 }
 
+export interface IapiResponseBody extends IapiLlmBody {
+    isMemory: boolean;
+}
+
 export interface IapiAnthropicCliBody {
     code?: string;
     model?: string;
@@ -36,11 +40,6 @@ export interface IapiLlmResponse {
     response: {
         output: Ioutput[];
     };
-}
-
-export interface IapiTokenDetailBody {
-    model: string;
-    text: string;
 }
 
 export interface IapiTokenizeResponse {

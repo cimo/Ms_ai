@@ -8,18 +8,21 @@ import * as modelHelperSrc from "../model/HelperSrc.js";
 import * as modelService from "../model/Service.js";
 import * as instance from "../Instance.js";
 import Anthropic from "./Anthropic.js";
+import Memory from "./Memory.js";
 
 export default class Service {
     // Variable
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
     private anthropic: Anthropic;
+    private memory: Memory;
 
     // Method
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
         this.app = app;
         this.limiter = limiter;
         this.anthropic = new Anthropic();
+        this.memory = new Memory();
     }
 
     private modelAvailable = async (): Promise<string[]> => {
@@ -55,58 +58,7 @@ export default class Service {
             });
     };
 
-    private tokenCount = async (model: string, text: string): Promise<number> => {
-        return instance.api
-            .post<modelService.IapiTokenizeResponse>(
-                "/tokenize",
-                {
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                },
-                { model, content: text }
-            )
-            .then((resultApi) => {
-                return resultApi.data.tokens.length;
-            })
-            .catch((error: Error) => {
-                helperSrc.writeLog("Service.ts - /tokenize - catch()", error.message);
-
-                return -1;
-            });
-    };
-
-    private contextSize = async (model: string): Promise<number> => {
-        return instance.api
-            .get<modelService.IapiPropsResponse>(`/props?model=${encodeURIComponent(model)}`, {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-            .then((resultApi) => {
-                return resultApi.data.default_generation_settings.n_ctx;
-            })
-            .catch((error: Error) => {
-                helperSrc.writeLog("Service.ts - /props - catch()", error.message);
-
-                return -1;
-            });
-    };
-
     api = (): void => {
-        this.app.post("/api/token-detail", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
-            const body = request.body as modelService.IapiTokenDetailBody;
-
-            const count = await this.tokenCount(body.model, body.text);
-            const contextSize = await this.contextSize(body.model);
-
-            if (count === -1 || contextSize === -1) {
-                helperSrc.responseBody({ state: "ko", message: "Engine not available." }, response, 200);
-            } else {
-                helperSrc.responseBody({ state: "ok", message: "", data: { count, contextSize } }, response, 200);
-            }
-        });
-
         this.app.get("/api/model", this.limiter, Ca.authenticationMiddleware, (_: Request, response: Response) => {
             this.modelAvailable()
                 .then((resultApiList) => {
@@ -121,9 +73,9 @@ export default class Service {
                 });
         });
 
-        this.app.post("/api/response", Ca.authenticationMiddleware, (request: Request, response: Response) => {
+        this.app.post("/api/response", Ca.authenticationMiddleware, async (request: Request, response: Response) => {
             const aiCookie = request.headers["ai-cookie"];
-            const body = request.body as modelService.IapiLlmBody;
+            const { isMemory, ...body } = request.body as modelService.IapiResponseBody;
 
             if (typeof aiCookie !== "string") {
                 helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid header.");
@@ -142,6 +94,14 @@ export default class Service {
                         abortControllerEngine.abort();
                     }
                 });
+
+                if (isMemory) {
+                    const isMemoryExecuted = await this.memory.execute(body, response, abortControllerEngine.signal);
+
+                    if (isMemoryExecuted) {
+                        return;
+                    }
+                }
 
                 return new Promise((resolve, reject) => {
                     instance.api
