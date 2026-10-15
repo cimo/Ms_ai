@@ -10,6 +10,8 @@ import { Ca } from "@cimo/authentication/dist/src/Main.js";
 
 // Source
 import * as helperSrc from "../HelperSrc.js";
+import * as instance from "../Instance.js";
+import * as modelHelperSrc from "../model/HelperSrc.js";
 import * as modelServer from "../model/Server.js";
 import ControllerService from "./Service.js";
 
@@ -42,7 +44,7 @@ export default class Server {
     }
 
     createSetting = (): void => {
-        Ca.setCookieNameCustom("ai-cookie");
+        Ca.setCookieName(`${helperSrc.LABEL}_authentication`);
 
         this.app.set("trust proxy", "loopback");
         this.app.use(Compression());
@@ -107,26 +109,78 @@ export default class Server {
                 helperSrc.responseBody({ state: "ok", message: `Client ip: ${request.clientIp || ""}` }, response, 200);
             });
 
-            this.app.get("/login", this.limiter, async (_: Request, response: Response) => {
-                Ca.writeCookie(`${helperSrc.LABEL}_authentication`, response);
-
-                helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
-            });
-
-            this.app.get("/logout", this.limiter, Ca.authenticationMiddleware, async (request: Request, response: Response) => {
+            this.app.get("/login", this.limiter, async (request: Request, response: Response) => {
+                const cookie = request.headers["cookie"];
                 const mcpSessionId = request.headers["mcp-session-id"];
 
-                if (typeof mcpSessionId !== "string") {
-                    helperSrc.writeLog("Server.ts - api(/logout) - Error", "Missing or invalid header.");
+                if (typeof cookie !== "string" || typeof mcpSessionId !== "string") {
+                    helperSrc.writeLog("Server.ts - api(/login) - Error", "Missing or invalid header.");
 
                     helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
                 } else {
-                    await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`);
+                    instance.apiMcp
+                        .post<modelHelperSrc.IapiResponse>(
+                            "/api/session-check",
+                            {
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Cookie: cookie,
+                                    "mcp-session-id": mcpSessionId
+                                }
+                            },
+                            {}
+                        )
+                        .then(() => {
+                            Ca.writeCookie(mcpSessionId, response);
 
-                    Ca.deleteCookie(`${helperSrc.LABEL}_authentication`, request, response);
+                            helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
+                        })
+                        .catch((error: Error) => {
+                            if (error.cause === 401) {
+                                helperSrc.responseBody({ state: "ko", message: "Invalid session." }, response, 200);
 
-                    helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
+                                return;
+                            }
+
+                            helperSrc.writeLog("Server.ts - api(/login) - post(/api/session-check) - catch()", error.message);
+
+                            helperSrc.responseBody({ state: "ko", message: "Failed to verify session." }, response, 500);
+                        });
                 }
+            });
+
+            this.app.get(
+                "/logout",
+                this.limiter,
+                Ca.authenticationMiddleware,
+                Ca.identityMiddleware("mcp-session-id"),
+                async (request: Request, response: Response) => {
+                    const mcpSessionId = request.headers["mcp-session-id"];
+
+                    if (typeof mcpSessionId !== "string") {
+                        helperSrc.writeLog("Server.ts - api(/logout) - Error", "Missing or invalid header.");
+
+                        helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
+                    } else {
+                        await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`);
+
+                        Ca.deleteCookie(request, response);
+
+                        helperSrc.responseBody({ state: "ok", message: "" }, response, 200);
+                    }
+                }
+            );
+
+            this.app.use((error: Error, _: Request, response: Response, next: NextFunction) => {
+                helperSrc.writeLog("Server.ts - createServer() - listen() - use()", error.message);
+
+                if (response.headersSent) {
+                    next(error);
+
+                    return;
+                }
+
+                helperSrc.responseBody({ state: "ko", message: "Internal error." }, response, 500);
             });
         });
     };

@@ -190,14 +190,28 @@ export default class Anthropic {
     };
 
     command = (mcpSessionId: string, model: string, systemPrompt: string, userPrompt: string): Promise<modelHelperSrc.IactionOperation> => {
-        const claudePrint = spawn("claude", ["--model", model, "--system-prompt", systemPrompt, "--print", userPrompt], {
-            env: {
-                ...process.env,
-                CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`
-            },
-            stdio: ["ignore", "pipe", "pipe"],
-            shell: false
-        });
+        const claudePrint = spawn(
+            "claude",
+            [
+                "--print",
+                "--tools",
+                "",
+                "--safe-mode",
+                "--no-session-persistence",
+                `--model=${model}`,
+                `--system-prompt=${systemPrompt}`,
+                "--",
+                userPrompt
+            ],
+            {
+                env: {
+                    ...process.env,
+                    CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`
+                },
+                stdio: ["ignore", "pipe", "pipe"],
+                shell: false
+            }
+        );
 
         return new Promise((resolve) => {
             let output = "";

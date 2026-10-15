@@ -3,7 +3,10 @@ import { Cr } from "@cimo/request/dist/src/Main.js";
 // Source
 import * as helperSrc from "./HelperSrc.js";
 
+const protocol = helperSrc.localeFromEnvName() === "jp" ? "https" : "http";
+
 export const api = new Cr(helperSrc.URL_ENGINE);
+export const apiMcp = new Cr(`${protocol}://${helperSrc.DOMAIN}:1047`);
 
 api.setRequestInterceptor((config: RequestInit) => {
     return {

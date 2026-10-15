@@ -74,160 +74,156 @@ export default class Service {
         });
 
         this.app.post("/api/response", Ca.authenticationMiddleware, async (request: Request, response: Response) => {
-            const aiCookie = request.headers["ai-cookie"];
             const { isMemory, ...body } = request.body as modelService.IapiResponseBody;
 
-            if (typeof aiCookie !== "string") {
-                helperSrc.writeLog("Service.ts - api(/api/response) - Error", "Missing or invalid header.");
+            response.setHeader("Content-Type", "text/event-stream");
+            response.setHeader("Cache-Control", "no-cache");
+            response.setHeader("Connection", "keep-alive");
+            response.setHeader("X-Accel-Buffering", "no");
 
-                helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
-            } else {
-                response.setHeader("Content-Type", "text/event-stream");
-                response.setHeader("Cache-Control", "no-cache");
-                response.setHeader("Connection", "keep-alive");
-                response.setHeader("X-Accel-Buffering", "no");
+            const abortControllerEngine = new AbortController();
 
-                const abortControllerEngine = new AbortController();
-
-                response.on("close", () => {
-                    if (!response.writableEnded) {
-                        abortControllerEngine.abort();
-                    }
-                });
-
-                if (isMemory) {
-                    const isMemoryExecuted = await this.memory.execute(body, response, abortControllerEngine.signal);
-
-                    if (isMemoryExecuted) {
-                        return;
-                    }
+            response.on("close", () => {
+                if (!response.writableEnded) {
+                    abortControllerEngine.abort();
                 }
+            });
 
-                return new Promise((resolve, reject) => {
-                    instance.api
-                        .stream(
-                            "/v1/responses",
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "ai-cookie": aiCookie
-                                },
-                                signal: abortControllerEngine.signal
+            if (isMemory) {
+                const isMemoryExecuted = await this.memory.execute(body, response, abortControllerEngine.signal);
+
+                if (isMemoryExecuted) {
+                    return;
+                }
+            }
+
+            return new Promise((resolve, reject) => {
+                instance.api
+                    .stream(
+                        "/v1/responses",
+                        {
+                            headers: {
+                                "Content-Type": "application/json"
                             },
-                            body
-                        )
-                        .then(async (resultApi) => {
-                            const decoder = new TextDecoder("utf-8");
-                            let buffer = "";
+                            signal: abortControllerEngine.signal
+                        },
+                        body
+                    )
+                    .then(async (resultApi) => {
+                        const decoder = new TextDecoder("utf-8");
+                        let buffer = "";
 
-                            while (true) {
-                                const { value, done } = await resultApi.read();
+                        while (true) {
+                            const { value, done } = await resultApi.read();
 
-                                if (done) {
-                                    const bufferTrim = buffer.trim();
+                            if (done) {
+                                const bufferTrim = buffer.trim();
 
-                                    if (bufferTrim !== "" && helperSrc.jsonCheck(bufferTrim)) {
-                                        const bufferObject = JSON.parse(bufferTrim) as modelService.IapiEngineError;
+                                if (bufferTrim !== "" && helperSrc.jsonCheck(bufferTrim)) {
+                                    const bufferObject = JSON.parse(bufferTrim) as modelService.IapiEngineError;
 
-                                        if (bufferObject.error) {
-                                            helperSrc.writeLog("Service.ts - api(/api/response) - stream()", bufferObject.error.message);
+                                    if (bufferObject.error) {
+                                        helperSrc.writeLog("Service.ts - api(/api/response) - stream()", bufferObject.error.message);
 
-                                            response.end(
-                                                `data: ${JSON.stringify({
-                                                    type: "error",
-                                                    error: {
-                                                        message: bufferObject.error.message
-                                                    }
-                                                })}\n\n`
-                                            );
+                                        response.end(
+                                            `data: ${JSON.stringify({
+                                                type: "error",
+                                                error: {
+                                                    message: bufferObject.error.message
+                                                }
+                                            })}\n\n`
+                                        );
 
-                                            resolve("");
+                                        resolve("");
 
-                                            return;
-                                        }
-                                    }
-
-                                    response.end(
-                                        `data: ${JSON.stringify({
-                                            type: "response.completed"
-                                        })}\n\n`
-                                    );
-
-                                    resolve("");
-
-                                    return;
-                                }
-
-                                buffer += decoder.decode(value, { stream: true });
-                                const bufferSplit = buffer.split(/\r?\n/);
-                                buffer = bufferSplit.pop() as string;
-
-                                for (let a = 0; a < bufferSplit.length; a++) {
-                                    const line = bufferSplit[a];
-
-                                    if (line.startsWith("data:")) {
-                                        const lineSlice = line.slice(5).trim();
-
-                                        response.write(`data: ${lineSlice}\n\n`);
+                                        return;
                                     }
                                 }
-                            }
-                        })
-                        .catch((error: Error) => {
-                            if (abortControllerEngine.signal.aborted) {
+
+                                response.end(
+                                    `data: ${JSON.stringify({
+                                        type: "response.completed"
+                                    })}\n\n`
+                                );
+
                                 resolve("");
 
                                 return;
                             }
 
-                            helperSrc.writeLog("Service.ts - api(/api/response) - catch()", error.message);
+                            buffer += decoder.decode(value, { stream: true });
+                            const bufferSplit = buffer.split(/\r?\n/);
+                            buffer = bufferSplit.pop() as string;
 
-                            response.end(
-                                `data: ${JSON.stringify({
-                                    type: "error",
-                                    error: {
-                                        message: error.message
-                                    }
-                                })}\n\n`
-                            );
+                            for (let a = 0; a < bufferSplit.length; a++) {
+                                const line = bufferSplit[a];
 
-                            reject(new Error(error.message));
+                                if (line.startsWith("data:")) {
+                                    const lineSlice = line.slice(5).trim();
+
+                                    response.write(`data: ${lineSlice}\n\n`);
+                                }
+                            }
+                        }
+                    })
+                    .catch((error: Error) => {
+                        if (abortControllerEngine.signal.aborted) {
+                            resolve("");
 
                             return;
-                        });
-                });
-            }
+                        }
+
+                        helperSrc.writeLog("Service.ts - api(/api/response) - catch()", error.message);
+
+                        response.end(
+                            `data: ${JSON.stringify({
+                                type: "error",
+                                error: {
+                                    message: error.message
+                                }
+                            })}\n\n`
+                        );
+
+                        reject(new Error(error.message));
+
+                        return;
+                    });
+            });
         });
 
-        this.app.post("/api/anthropic-cli", Ca.authenticationMiddleware, async (request: Request, response: Response) => {
-            const aiCookie = request.headers["ai-cookie"];
-            const mcpSessionId = request.headers["mcp-session-id"];
-            const body = request.body as modelService.IapiAnthropicCliBody;
+        this.app.post(
+            "/api/anthropic-cli",
+            Ca.authenticationMiddleware,
+            Ca.identityMiddleware("mcp-session-id"),
+            async (request: Request, response: Response) => {
+                const mcpSessionId = request.headers["mcp-session-id"];
+                const body = request.body as modelService.IapiAnthropicCliBody;
 
-            const code = body.code;
-            const model = body.model;
-            const systemPrompt = body.systemPrompt;
-            const userPrompt = body.userPrompt;
+                const code = body.code;
+                const model = body.model;
+                const systemPrompt = body.systemPrompt;
+                const userPrompt = body.userPrompt;
 
-            if (typeof aiCookie !== "string" || typeof mcpSessionId !== "string") {
-                helperSrc.writeLog("Service.ts - api(/api/anthropic-cli) - Error", "Missing or invalid header.");
+                if (typeof mcpSessionId !== "string") {
+                    helperSrc.writeLog("Service.ts - api(/api/anthropic-cli) - Error", "Missing or invalid header.");
 
-                helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
-            } else {
-                let resultObject = {} as modelHelperSrc.IactionOperation;
-
-                if (!model || !systemPrompt || !userPrompt) {
-                    resultObject = await this.anthropic.authentication(mcpSessionId, code);
+                    helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
                 } else {
-                    resultObject = await this.anthropic.command(mcpSessionId, model, systemPrompt, userPrompt);
-                }
+                    let resultObject = {} as modelHelperSrc.IactionOperation;
 
-                if (resultObject.state === "ko") {
-                    helperSrc.responseBody({ state: "ko", message: resultObject.message }, response, 500);
-                } else {
-                    helperSrc.responseBody({ state: "ok", message: resultObject.message, data: resultObject.data }, response, 200);
+                    if (!model || !systemPrompt || !userPrompt) {
+                        resultObject = await this.anthropic.authentication(mcpSessionId, code);
+                    } else {
+                        resultObject = await this.anthropic.command(mcpSessionId, model, systemPrompt, userPrompt);
+                    }
+
+                    if (resultObject.state === "ko") {
+                        helperSrc.responseBody({ state: "ko", message: resultObject.message }, response, 500);
+                    } else {
+                        helperSrc.responseBody({ state: "ok", message: resultObject.message, data: resultObject.data }, response, 200);
+                    }
                 }
             }
-        });
+        );
     };
 }
