@@ -8,6 +8,7 @@ import * as modelHelperSrc from "../model/HelperSrc.js";
 import * as modelService from "../model/Service.js";
 import * as instance from "../Instance.js";
 import Anthropic from "./Anthropic.js";
+import OpenAi from "./OpenAi.js";
 import Memory from "./Memory.js";
 
 export default class Service {
@@ -15,6 +16,7 @@ export default class Service {
     private app: Express.Express;
     private limiter: RateLimitRequestHandler;
     private anthropic: Anthropic;
+    private openAi: OpenAi;
     private memory: Memory;
 
     // Method
@@ -22,6 +24,7 @@ export default class Service {
         this.app = app;
         this.limiter = limiter;
         this.anthropic = new Anthropic();
+        this.openAi = new OpenAi();
         this.memory = new Memory();
     }
 
@@ -215,6 +218,42 @@ export default class Service {
                         resultObject = await this.anthropic.authentication(mcpSessionId, code);
                     } else {
                         resultObject = await this.anthropic.command(mcpSessionId, model, systemPrompt, userPrompt);
+                    }
+
+                    if (resultObject.state === "ko") {
+                        helperSrc.responseBody({ state: "ko", message: resultObject.message }, response, 500);
+                    } else {
+                        helperSrc.responseBody({ state: "ok", message: resultObject.message, data: resultObject.data }, response, 200);
+                    }
+                }
+            }
+        );
+
+        this.app.post(
+            "/api/openai-cli",
+            Ca.authenticationMiddleware,
+            Ca.identityMiddleware("mcp-session-id"),
+            async (request: Request, response: Response) => {
+                const aiCookie = request.headers["ai-cookie"];
+                const mcpSessionId = request.headers["mcp-session-id"];
+                const body = request.body as modelService.IapiOpenAiCliBody;
+
+                const isCheck = body.isCheck;
+                const model = body.model;
+                const systemPrompt = body.systemPrompt;
+                const userPrompt = body.userPrompt;
+
+                if (typeof aiCookie !== "string" || typeof mcpSessionId !== "string") {
+                    helperSrc.writeLog("Service.ts - api(/api/openai-cli) - Error", "Missing or invalid header.");
+
+                    helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
+                } else {
+                    let resultObject = {} as modelHelperSrc.IactionOperation;
+
+                    if (!model || !systemPrompt || !userPrompt) {
+                        resultObject = await this.openAi.authentication(mcpSessionId, isCheck);
+                    } else {
+                        resultObject = await this.openAi.command(mcpSessionId, model, systemPrompt, userPrompt);
                     }
 
                     if (resultObject.state === "ko") {

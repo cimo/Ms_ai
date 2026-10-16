@@ -81,7 +81,7 @@ export default class Anthropic {
         this.sessionObject[mcpSessionId].authLoginStart = spawn("claude", ["auth", "login"], {
             env: {
                 ...process.env,
-                CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`,
+                CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}input/${mcpSessionId}/claude`,
                 NO_COLOR: "1"
             },
             stdio: ["pipe", "pipe", "pipe"],
@@ -206,7 +206,7 @@ export default class Anthropic {
             {
                 env: {
                     ...process.env,
-                    CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`
+                    CLAUDE_CONFIG_DIR: `${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}input/${mcpSessionId}/claude`
                 },
                 stdio: ["ignore", "pipe", "pipe"],
                 shell: false

@@ -162,7 +162,8 @@ export default class Server {
 
                         helperSrc.responseBody({ state: "ko", message: "Missing or invalid header." }, response, 500);
                     } else {
-                        await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}/input/${mcpSessionId}/claude`);
+                        await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}input/${mcpSessionId}/claude`);
+                        await helperSrc.fileOrFolderDelete(`${helperSrc.PATH_ROOT}${helperSrc.PATH_FILE}input/${mcpSessionId}/codex`);
 
                         Ca.deleteCookie(request, response);
 

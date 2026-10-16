@@ -35,6 +35,13 @@ export interface IapiAnthropicCliBody {
     userPrompt?: string;
 }
 
+export interface IapiOpenAiCliBody {
+    isCheck?: boolean;
+    model?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+}
+
 export interface IapiLlmResponse {
     type: string;
     response: {
