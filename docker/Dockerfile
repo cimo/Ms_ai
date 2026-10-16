@@ -142,10 +142,10 @@ RUN cd ~ \
     libopenblas0-pthread \
     # Claude code
     && curl -fsSL https://claude.ai/install.sh | HOME=/opt/claude bash \
-    && ln -s /opt/claude/.local/bin/claude /usr/local/bin/claude \
+    && ln -sf /opt/claude/.local/bin/claude /usr/local/bin/claude \
     # Codex
     && curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 HOME=/opt/codex sh \
-    && ln -s /opt/codex/.local/bin/codex /usr/local/bin/codex \
+    && ln -sf /opt/codex/.local/bin/codex /usr/local/bin/codex \
     # Upgrade
     && apt-get update \
     && apt-get upgrade -y \
