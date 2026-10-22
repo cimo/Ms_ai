@@ -42,7 +42,6 @@ export const FILE_SIZE_MB = "";
 export const URL_ENGINE = Ce.checkVariable("MS_AI_URL_ENGINE") || (process.env["MS_AI_URL_ENGINE"] as string);
 export const URL_ENGINE_TOKEN = Ce.checkVariable("MS_AI_URL_ENGINE_TOKEN") || (process.env["MS_AI_URL_ENGINE_TOKEN"] as string);
 export const PATH_ENGINE_MODEL = Ce.checkVariable("MS_AI_PATH_ENGINE_MODEL");
-export const QUEUE = Ce.checkVariable("MS_AI_QUEUE") || (process.env["MS_AI_QUEUE"] as string);
 // Custom
 
 const fileSize = (value: Uint8Array | number, isOnlyByte = true): string => {
