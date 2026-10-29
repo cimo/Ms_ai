@@ -17,6 +17,8 @@ export default class Anthropic {
 
         authLoginStart.stdout.removeAllListeners("data");
         authLoginStart.stderr.removeAllListeners("data");
+        authLoginStart.removeAllListeners("close");
+        authLoginStart.removeAllListeners("error");
 
         session.authLoginStart = null;
         session.authLoginEnd = null;

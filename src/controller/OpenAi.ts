@@ -18,6 +18,8 @@ export default class OpenAi {
 
         authLogin.stdout.removeAllListeners("data");
         authLogin.stderr.removeAllListeners("data");
+        authLogin.removeAllListeners("close");
+        authLogin.removeAllListeners("error");
 
         session.authLogin = null;
 
@@ -234,6 +236,34 @@ export default class OpenAi {
                 "read-only",
                 "--config",
                 'approval_policy="never"',
+                "--config",
+                'history.persistence="none"',
+                "--config",
+                "features.memories=false",
+                "--config",
+                "memories.use_memories=false",
+                "--config",
+                "memories.generate_memories=false",
+                "--config",
+                "memories.dedicated_tools=false",
+                "--config",
+                "features.plugins=false",
+                "--config",
+                "features.plugin_hooks=false",
+                "--config",
+                "features.recommended_plugins=false",
+                "--config",
+                "plugins._default.enabled=false",
+                "--config",
+                "skills.include_instructions=false",
+                "--config",
+                "skills.bundled.enabled=false",
+                "--config",
+                "features.skill_search=false",
+                "--config",
+                "features.skill_env_var_dependency_prompt=false",
+                "--config",
+                "features.skill_mcp_dependency_install=false",
                 "--config",
                 `developer_instructions="${systemPrompt}"`,
                 "--model",
