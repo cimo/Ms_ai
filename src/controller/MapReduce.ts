@@ -3,17 +3,21 @@ import { Response } from "express";
 // Source
 import * as helperSrc from "../HelperSrc.js";
 import * as modelService from "../model/Service.js";
-import * as modelMemory from "../model/Memory.js";
+import * as modelMapReduce from "../model/MapReduce.js";
 import * as instance from "../Instance.js";
 
-export default class Memory {
+export default class MapReduce {
     // Variable
     private tokenReserve: number;
     private chunkShrink: number;
     private tokenChunk: number;
     private systemCandidate: string;
     private systemChoose: string;
-    private systemMemory: string;
+    private systemKind: string;
+    private systemJoin: string;
+    private systemMap: string;
+    private systemPart: string;
+    private systemCombine: string;
     private systemAnswer: string;
 
     // Method
@@ -43,7 +47,7 @@ export default class Memory {
         return textList.join("\n");
     };
 
-    private tokenCount = async (model: string, text: string): Promise<modelMemory.IresultCount> => {
+    private tokenCount = async (model: string, text: string): Promise<modelMapReduce.IresultCount> => {
         return instance.api
             .post<modelService.IapiTokenizeResponse>(
                 "/tokenize",
@@ -58,13 +62,13 @@ export default class Memory {
                 return { count: resultApi.data.tokens.length, message: "" };
             })
             .catch((error: Error) => {
-                helperSrc.writeLog("Memory.ts - tokenCount() - catch()", error.message);
+                helperSrc.writeLog("MapReduce.ts - tokenCount() - catch()", error.message);
 
                 return { count: -1, message: error.message };
             });
     };
 
-    private contextSize = async (model: string): Promise<modelMemory.IresultCount> => {
+    private contextSize = async (model: string): Promise<modelMapReduce.IresultCount> => {
         return instance.api
             .get<modelService.IapiPropsResponse>(`/props?model=${encodeURIComponent(model)}`, {
                 headers: {
@@ -75,7 +79,7 @@ export default class Memory {
                 return { count: resultApi.data.default_generation_settings.n_ctx, message: "" };
             })
             .catch((error: Error) => {
-                helperSrc.writeLog("Memory.ts - contextSize() - catch()", error.message);
+                helperSrc.writeLog("MapReduce.ts - contextSize() - catch()", error.message);
 
                 return { count: -1, message: error.message };
             });
@@ -126,7 +130,7 @@ export default class Memory {
         return resultList;
     };
 
-    private chunkNext = (text: string, lengthMax: number): modelMemory.Ichunk => {
+    private chunkNext = (text: string, lengthMax: number): modelMapReduce.Ichunk => {
         const lineList = text.split("\n");
 
         let chunk = "";
@@ -195,7 +199,7 @@ export default class Memory {
         tokenBudget: number,
         lengthPerToken: number,
         rest: string
-    ): Promise<modelMemory.Ichunk | string> => {
+    ): Promise<modelMapReduce.Ichunk | string> => {
         const tokenFixed = await this.tokenCount(model, promptBuild(""));
 
         if (tokenFixed.count === -1) {
@@ -223,9 +227,9 @@ export default class Memory {
         return chunkObject;
     };
 
-    private responseText = async (signal: AbortSignal, model: string, systemPrompt: string, userPrompt: string): Promise<modelMemory.IresultText> => {
+    private responseText = async (signal: AbortSignal, model: string, systemPrompt: string, userPrompt: string): Promise<modelMapReduce.IresultText> => {
         return instance.api
-            .post<modelMemory.IapiChatResponse & modelService.IapiEngineError>(
+            .post<modelMapReduce.IapiChatResponse & modelService.IapiEngineError>(
                 "/v1/chat/completions",
                 {
                     headers: {
@@ -245,7 +249,7 @@ export default class Memory {
             )
             .then((resultApi) => {
                 if (resultApi.data.error) {
-                    helperSrc.writeLog("Memory.ts - responseText() - post()", resultApi.data.error.message);
+                    helperSrc.writeLog("MapReduce.ts - responseText() - post()", resultApi.data.error.message);
 
                     return { text: "", message: resultApi.data.error.message };
                 }
@@ -253,7 +257,7 @@ export default class Memory {
                 return { text: resultApi.data.choices[0].message.content.trim(), message: "" };
             })
             .catch((error: Error) => {
-                helperSrc.writeLog("Memory.ts - responseText() - catch()", error.message);
+                helperSrc.writeLog("MapReduce.ts - responseText() - catch()", error.message);
 
                 return { text: "", message: error.message };
             });
@@ -266,8 +270,8 @@ export default class Memory {
         lengthPerToken: number,
         response: Response,
         signal: AbortSignal
-    ): Promise<modelMemory.Icandidate[] | string> => {
-        const candidateList: modelMemory.Icandidate[] = [];
+    ): Promise<modelMapReduce.Icandidate[] | string> => {
+        const candidateList: modelMapReduce.Icandidate[] = [];
 
         const promptEnd =
             "\n\nNow write ONLY the numbers of the LINES that contain a request of the user to the assistant, separated by commas, or write ONLY NONE if no line contains it.";
@@ -324,7 +328,7 @@ export default class Memory {
         return candidateList;
     };
 
-    private requestChoose = async (candidateList: modelMemory.Icandidate[], model: string, signal: AbortSignal): Promise<string[] | string> => {
+    private requestChoose = async (candidateList: modelMapReduce.Icandidate[], model: string, signal: AbortSignal): Promise<string[] | string> => {
         const requestList: string[] = [];
 
         for (let a = 0; a < candidateList.length; a++) {
@@ -347,7 +351,68 @@ export default class Memory {
         return requestList;
     };
 
-    private memoryBuild = async (
+    private kindFind = async (signal: AbortSignal, model: string, question: string): Promise<modelMapReduce.IresultText> => {
+        return this.responseText(signal, model, this.systemKind, `QUESTION:\n${question}`);
+    };
+
+    private partBuild = async (
+        text: string,
+        model: string,
+        systemPrompt: string,
+        label: string,
+        question: string,
+        tokenBudget: number,
+        lengthPerToken: number,
+        response: Response,
+        numberQuestion: number,
+        countQuestion: number,
+        signal: AbortSignal,
+        isWrite: boolean
+    ): Promise<string[] | string> => {
+        const partList: string[] = [];
+
+        let rest = text;
+        let countPart = 0;
+
+        while (rest !== "") {
+            const chunkObject = await this.chunkFit(
+                model,
+                (chunk) => `${systemPrompt}\n${label}:\n${chunk}\n\nQUESTION:\n${question}`,
+                tokenBudget,
+                lengthPerToken,
+                rest
+            );
+
+            if (typeof chunkObject === "string") {
+                return chunkObject;
+            }
+
+            rest = chunkObject.rest;
+            countPart++;
+
+            this.progressWrite(response, `Writing for the request ${numberQuestion} of ${countQuestion}, part ${countPart}.`);
+
+            const resultText = await this.responseText(signal, model, systemPrompt, `${label}:\n${chunkObject.chunk}\n\nQUESTION:\n${question}`);
+
+            if (resultText.message !== "") {
+                return resultText.message;
+            }
+
+            if (resultText.text !== "NONE") {
+                if (isWrite) {
+                    const delta = partList.length > 0 ? `\n\n${resultText.text}` : resultText.text;
+
+                    this.eventWrite(response, { type: "response.output_text.delta", delta });
+                }
+
+                partList.push(resultText.text);
+            }
+        }
+
+        return partList;
+    };
+
+    private mapBuild = async (
         question: string,
         content: string,
         model: string,
@@ -357,8 +422,8 @@ export default class Memory {
         numberQuestion: number,
         countQuestion: number,
         signal: AbortSignal
-    ): Promise<modelMemory.IresultMemory> => {
-        const memoryList: string[] = [];
+    ): Promise<modelMapReduce.IresultMap> => {
+        const mapList: string[] = [];
 
         const promptUser = `QUESTION OF THE USER (only to know which lines are needed, you MUST NOT answer it):\n${question}\n\nLINES:\n`;
         const promptEnd =
@@ -370,14 +435,14 @@ export default class Memory {
         while (rest !== "") {
             const chunkObject = await this.chunkFit(
                 model,
-                (chunk) => `${this.systemMemory}\n${promptUser}${this.numberedList(this.lineList(chunk)).join("\n")}${promptEnd}`,
+                (chunk) => `${this.systemMap}\n${promptUser}${this.numberedList(this.lineList(chunk)).join("\n")}${promptEnd}`,
                 tokenBudget,
                 lengthPerToken,
                 rest
             );
 
             if (typeof chunkObject === "string") {
-                return { memory: "", message: chunkObject };
+                return { map: "", message: chunkObject };
             }
 
             rest = chunkObject.rest;
@@ -390,12 +455,12 @@ export default class Memory {
             const resultText = await this.responseText(
                 signal,
                 model,
-                this.systemMemory,
+                this.systemMap,
                 `${promptUser}${this.numberedList(lineList).join("\n")}${promptEnd}`
             );
 
             if (resultText.message !== "") {
-                return { memory: "", message: resultText.message };
+                return { map: "", message: resultText.message };
             }
 
             const numberList: number[] = [];
@@ -413,17 +478,17 @@ export default class Memory {
             for (let a = 0; a < numberList.length; a++) {
                 const line = lineList[numberList[a] - 1];
 
-                if (line && !memoryList.includes(line)) {
-                    memoryList.push(line);
+                if (line && !mapList.includes(line)) {
+                    mapList.push(line);
                 }
             }
         }
 
-        return { memory: memoryList.join("\n"), message: "" };
+        return { map: mapList.join("\n"), message: "" };
     };
 
-    private memoryFit = async (
-        memory: string,
+    private reduceFit = async (
+        map: string,
         model: string,
         systemClient: string,
         question: string,
@@ -433,55 +498,72 @@ export default class Memory {
         numberQuestion: number,
         countQuestion: number,
         signal: AbortSignal
-    ): Promise<modelMemory.IresultMemory> => {
-        let memoryCurrent = memory;
+    ): Promise<modelMapReduce.IresultReduce> => {
+        let mapCurrent = map;
+        let isCombine = false;
 
         while (true) {
-            const tokenMemory = await this.tokenCount(model, `${this.systemAnswer}\n${systemClient}\n${memoryCurrent}\n${question}`);
+            const systemPrompt = isCombine ? this.systemCombine : this.systemAnswer;
 
-            if (tokenMemory.count === -1) {
-                return { memory: "", message: tokenMemory.message };
+            const tokenMap = await this.tokenCount(model, `${systemPrompt}\n${systemClient}\n${mapCurrent}\n${question}`);
+
+            if (tokenMap.count === -1) {
+                return { map: "", isCombine, message: tokenMap.message };
             }
 
-            if (tokenMemory.count <= tokenBudget) {
-                return { memory: memoryCurrent, message: "" };
+            if (tokenMap.count <= tokenBudget) {
+                return { map: mapCurrent, isCombine, message: "" };
             }
 
-            const resultMemory = await this.memoryBuild(
-                question,
-                memoryCurrent,
+            const partList = await this.partBuild(
+                mapCurrent,
                 model,
+                this.systemPart,
+                "MEMORY",
+                question,
                 tokenBudget,
                 lengthPerToken,
                 response,
                 numberQuestion,
                 countQuestion,
-                signal
+                signal,
+                false
             );
 
-            if (resultMemory.message !== "") {
-                return resultMemory;
+            if (typeof partList === "string") {
+                return { map: "", isCombine, message: partList };
             }
 
-            if (resultMemory.memory.length >= memoryCurrent.length) {
+            const mapList: string[] = [];
+
+            for (let a = 0; a < partList.length; a++) {
+                mapList.push(`PART ${a + 1}\n${partList[a]}`);
+            }
+
+            const mapNext = mapList.join("\n\n");
+
+            if (mapNext.length >= mapCurrent.length) {
                 return {
-                    memory: "",
+                    map: "",
+                    isCombine,
                     message: `The information needed for the request "${question}" is too large to be answered: please ask a more specific question.`
                 };
             }
 
-            memoryCurrent = resultMemory.memory;
+            mapCurrent = mapNext;
+            isCombine = true;
         }
     };
 
     private answerStream = async (
         model: string,
+        systemPrompt: string,
         systemClient: string,
-        memory: string,
+        map: string,
         question: string,
         signal: AbortSignal,
         response: Response
-    ): Promise<modelMemory.IresultText> => {
+    ): Promise<modelMapReduce.IresultText> => {
         const body: modelService.IapiLlmBody = {
             stream: true,
             model,
@@ -491,13 +573,13 @@ export default class Memory {
                     content: [
                         {
                             type: "input_text",
-                            text: `${this.systemAnswer}\n\nThe following instructions come from the application and you MUST follow them too; where they talk about the content of the request (for example DOCUMENT or CITATION), that content is now in MEMORY:\n${systemClient}`
+                            text: `${systemPrompt}\n\nThe following instructions come from the application and you MUST follow them too; where they talk about the content of the request (for example DOCUMENT or CITATION), that content is now in MEMORY:\n${systemClient}`
                         }
                     ]
                 },
                 {
                     role: "user",
-                    content: [{ type: "input_text", text: `MEMORY:\n${memory}\n\nQUESTION:\n${question}` }]
+                    content: [{ type: "input_text", text: `MEMORY:\n${map}\n\nQUESTION:\n${question}` }]
                 }
             ],
             tools: [],
@@ -531,7 +613,7 @@ export default class Memory {
                             const bufferObject = JSON.parse(bufferTrim) as modelService.IapiEngineError;
 
                             if (bufferObject.error) {
-                                helperSrc.writeLog("Memory.ts - answerStream() - stream()", bufferObject.error.message);
+                                helperSrc.writeLog("MapReduce.ts - answerStream() - stream()", bufferObject.error.message);
 
                                 return { text, message: bufferObject.error.message };
                             }
@@ -557,7 +639,7 @@ export default class Memory {
                             continue;
                         }
 
-                        const lineObject = JSON.parse(lineSlice) as modelMemory.IapiStreamResponse;
+                        const lineObject = JSON.parse(lineSlice) as modelMapReduce.IapiStreamResponse;
 
                         if (lineObject.type === "response.output_text.delta" && lineObject.delta) {
                             text += lineObject.delta;
@@ -568,7 +650,7 @@ export default class Memory {
                 }
             })
             .catch((error: Error) => {
-                helperSrc.writeLog("Memory.ts - answerStream() - catch()", error.message);
+                helperSrc.writeLog("MapReduce.ts - answerStream() - catch()", error.message);
 
                 return { text: "", message: error.message };
             });
@@ -598,7 +680,27 @@ export default class Memory {
             "You MUST answer ONLY with the word ASSISTANT or the word OTHER."
         ].join("\n");
 
-        this.systemMemory = [
+        this.systemKind = [
+            "You receive the QUESTION that a user wrote to an assistant about a document.",
+            "You MUST tell what the user wants to receive as answer:",
+            "- WHOLE: the user wants to receive the ENTIRE document written again from the first line to the last, in another form: translated into another language, copied, rewritten in another style, corrected or converted to another format. The QUESTION talks about the whole document or text, not about one item, one value, one section or one paragraph of it.",
+            "- ANSWER: every other case. The user wants to know something that is written in the document (a value, a name, a date, a place, an amount, the data of one item), or wants a summary, a list, a count, a total, a comparison, a yes or no, or wants to transform only one piece of the document (for example one section or one paragraph).",
+            "A QUESTION that asks what, which, who, where, when, how much or how many is ALWAYS ANSWER, in any language.",
+            "You MUST answer ONLY with the word WHOLE or the word ANSWER."
+        ].join("\n");
+
+        this.systemJoin = [
+            "You receive a PART of a long document and the QUESTION of the user, which asks to transform or to write again the whole document (for example to translate it).",
+            "The other parts are processed separately with the same QUESTION and the results are written one after the other, so your result MUST be only the transformed PART.",
+            "How to work:",
+            "- Do what the QUESTION asks on EVERY line of the PART, from the first to the last, in the same order: you MUST NOT skip, shorten or summarize anything.",
+            "- Keep the structure of the PART: the titles stay titles with the same number of #, the tables stay tables with the same rows and columns, the lists stay lists, the empty lines stay where they are.",
+            "- Numbers, dates, codes and references between square brackets MUST be copied character by character.",
+            "- You MUST NOT add introductions, comments, notes or conclusions, and you MUST NOT say that the text is a part.",
+            "You MUST write ONLY the transformed PART."
+        ].join("\n");
+
+        this.systemMap = [
             "You are a selector: you read numbered LINES of a document and choose the lines that will be used later, without the rest of the document, to answer the QUESTION of the user.",
             "You MUST NOT answer the QUESTION: you only choose lines. Whoever answers later will see ONLY the lines you choose, so every fact needed for the answer MUST be inside a chosen line.",
             "How to choose:",
@@ -614,7 +716,7 @@ export default class Memory {
             "You MUST write ONLY the numbers of the chosen lines separated by commas, or ONLY NONE if no line contains facts needed to answer the QUESTION."
         ].join("\n");
 
-        this.systemAnswer = [
+        const answerStartList = [
             "You answer the QUESTION of the user using ONLY the information in MEMORY.",
             "MEMORY contains lines taken from one or more documents that contain the facts to answer the QUESTION; the lines can contain much more than what is asked.",
             "When MEMORY contains lines that name a document (for example a file name between square brackets), every fact belongs to the last document named before it: you MUST use this to know which document each fact comes from and you MUST NOT mix the facts of different documents.",
@@ -628,9 +730,31 @@ export default class Memory {
             "- MEMORY can come from a document converted from a PDF or an image, where one item can be split over consecutive lines (for example a name that continues on the next line): you MUST join those parts and write the item complete, without losing any item.",
             "- When the QUESTION can refer to more than one value of MEMORY (for example an amount and the tax on that amount), choose the value whose label in MEMORY corresponds best to the words of the QUESTION; if it is still ambiguous, write every possible value together with its label as written in MEMORY.",
             "- When the QUESTION asks for a calculation (for example a sum, a difference, an average or a percentage), first write every value taken from MEMORY with the document it comes from, then the operation written with those values, then the result: the result is the only number that is not copied from MEMORY, and you MUST compute it step by step and check it before writing it.",
-            "- When the information needed to answer the QUESTION, or a part of it, is NOT in MEMORY, write that the document does not contain it and do NOT complete it yourself.",
+        ];
+
+        const answerMissing =
+            "- When the information needed to answer the QUESTION, or a part of it, is NOT in MEMORY, write that the document does not contain it and do NOT complete it yourself.";
+
+        const answerEndList = [
             "- Reply in the same language of the QUESTION; only the words follow the language of the QUESTION, the numbers stay exactly as they are written in MEMORY.",
             "Before writing the answer, check that every number in it is identical, character by character, to the same number in MEMORY."
+        ];
+
+        this.systemAnswer = [...answerStartList, answerMissing, ...answerEndList].join("\n");
+
+        this.systemPart = [
+            ...answerStartList,
+            ...answerEndList,
+            "IMPORTANT: MEMORY is only ONE PART of the information; the other parts are read separately with the same QUESTION and the answers of all the parts are put together later by someone else.",
+            "You MUST answer the QUESTION ONLY for what this part contains, completely, without talking about the parts: you MUST NOT write that the information is partial or that something is missing.",
+            "When this part contains nothing that is needed for the QUESTION, you MUST write ONLY NONE."
+        ].join("\n");
+
+        this.systemCombine = [
+            this.systemAnswer,
+            "IMPORTANT: here MEMORY contains the answers that were already given to the same QUESTION on each part of a long document, in the order of the document, each one introduced by a line PART and its number.",
+            "You MUST write one answer to the QUESTION for the whole document using all the parts: when the QUESTION asks for a count or a total you MUST add the values of all the parts, when it asks for a list you MUST write the items of all the parts once, when it asks for a summary you MUST write one summary that covers all the parts.",
+            "You MUST NOT talk about the parts in the answer."
         ].join("\n");
     }
 
@@ -700,39 +824,10 @@ export default class Memory {
                 return true;
             }
 
-            const resultMemory = await this.memoryBuild(
-                requestList[a],
-                content,
-                body.model,
-                tokenBudget,
-                lengthPerToken,
-                response,
-                a + 1,
-                requestList.length,
-                signal
-            );
+            const resultKind = await this.kindFind(signal, body.model, requestList[a]);
 
-            if (resultMemory.message !== "") {
-                this.errorWrite(response, resultMemory.message);
-
-                return true;
-            }
-
-            const resultFit = await this.memoryFit(
-                resultMemory.memory,
-                body.model,
-                systemClient,
-                requestList[a],
-                tokenBudget,
-                lengthPerToken,
-                response,
-                a + 1,
-                requestList.length,
-                signal
-            );
-
-            if (resultFit.message !== "") {
-                this.errorWrite(response, resultFit.message);
+            if (resultKind.message !== "") {
+                this.errorWrite(response, resultKind.message);
 
                 return true;
             }
@@ -743,21 +838,97 @@ export default class Memory {
                 header += `${requestList[a]}\n`;
             }
 
-            if (header !== "") {
-                answerText += header;
+            if (resultKind.text === "WHOLE") {
+                if (header !== "") {
+                    answerText += header;
 
-                this.eventWrite(response, { type: "response.output_text.delta", delta: header });
+                    this.eventWrite(response, { type: "response.output_text.delta", delta: header });
+                }
+
+                const partList = await this.partBuild(
+                    content,
+                    body.model,
+                    this.systemJoin,
+                    "PART",
+                    requestList[a],
+                    tokenBudget,
+                    lengthPerToken,
+                    response,
+                    a + 1,
+                    requestList.length,
+                    signal,
+                    true
+                );
+
+                if (typeof partList === "string") {
+                    this.errorWrite(response, partList);
+
+                    return true;
+                }
+
+                answerText += partList.join("\n\n");
+            } else {
+                const resultMap = await this.mapBuild(
+                    requestList[a],
+                    content,
+                    body.model,
+                    tokenBudget,
+                    lengthPerToken,
+                    response,
+                    a + 1,
+                    requestList.length,
+                    signal
+                );
+
+                if (resultMap.message !== "") {
+                    this.errorWrite(response, resultMap.message);
+
+                    return true;
+                }
+
+                const resultReduce = await this.reduceFit(
+                    resultMap.map,
+                    body.model,
+                    systemClient,
+                    requestList[a],
+                    tokenBudget,
+                    lengthPerToken,
+                    response,
+                    a + 1,
+                    requestList.length,
+                    signal
+                );
+
+                if (resultReduce.message !== "") {
+                    this.errorWrite(response, resultReduce.message);
+
+                    return true;
+                }
+
+                if (header !== "") {
+                    answerText += header;
+
+                    this.eventWrite(response, { type: "response.output_text.delta", delta: header });
+                }
+
+                const resultAnswer = await this.answerStream(
+                    body.model,
+                    resultReduce.isCombine ? this.systemCombine : this.systemAnswer,
+                    systemClient,
+                    resultReduce.map,
+                    requestList[a],
+                    signal,
+                    response
+                );
+
+                if (resultAnswer.message !== "") {
+                    this.errorWrite(response, resultAnswer.message);
+
+                    return true;
+                }
+
+                answerText += resultAnswer.text;
             }
-
-            const resultAnswer = await this.answerStream(body.model, systemClient, resultFit.memory, requestList[a], signal, response);
-
-            if (resultAnswer.message !== "") {
-                this.errorWrite(response, resultAnswer.message);
-
-                return true;
-            }
-
-            answerText += resultAnswer.text;
         }
 
         response.end(

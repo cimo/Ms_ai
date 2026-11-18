@@ -9,7 +9,7 @@ import * as modelService from "../model/Service.js";
 import * as instance from "../Instance.js";
 import Anthropic from "./Anthropic.js";
 import OpenAi from "./OpenAi.js";
-import Memory from "./Memory.js";
+import MapReduce from "./MapReduce.js";
 
 export default class Service {
     // Variable
@@ -17,7 +17,7 @@ export default class Service {
     private limiter: RateLimitRequestHandler;
     private anthropic: Anthropic;
     private openAi: OpenAi;
-    private memory: Memory;
+    private mapReduce: MapReduce;
 
     // Method
     constructor(app: Express.Express, limiter: RateLimitRequestHandler) {
@@ -25,7 +25,7 @@ export default class Service {
         this.limiter = limiter;
         this.anthropic = new Anthropic();
         this.openAi = new OpenAi();
-        this.memory = new Memory();
+        this.mapReduce = new MapReduce();
     }
 
     private modelAvailable = async (): Promise<string[]> => {
@@ -77,7 +77,7 @@ export default class Service {
         });
 
         this.app.post("/api/response", Ca.authenticationMiddleware, async (request: Request, response: Response) => {
-            const { isMemory, ...body } = request.body as modelService.IapiResponseBody;
+            const { isMapReduce, ...body } = request.body as modelService.IapiResponseBody;
 
             response.setHeader("Content-Type", "text/event-stream");
             response.setHeader("Cache-Control", "no-cache");
@@ -92,10 +92,10 @@ export default class Service {
                 }
             });
 
-            if (isMemory) {
-                const isMemoryExecuted = await this.memory.execute(body, response, abortControllerEngine.signal);
+            if (isMapReduce) {
+                const isMapReduceExecuted = await this.mapReduce.execute(body, response, abortControllerEngine.signal);
 
-                if (isMemoryExecuted) {
+                if (isMapReduceExecuted) {
                     return;
                 }
             }

@@ -13,8 +13,14 @@ export interface IresultText {
     message: string;
 }
 
-export interface IresultMemory {
-    memory: string;
+export interface IresultMap {
+    map: string;
+    message: string;
+}
+
+export interface IresultReduce {
+    map: string;
+    isCombine: boolean;
     message: string;
 }
 

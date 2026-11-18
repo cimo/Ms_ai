@@ -25,7 +25,7 @@ export interface IapiLlmBody extends Record<string, unknown> {
 }
 
 export interface IapiResponseBody extends IapiLlmBody {
-    isMemory: boolean;
+    isMapReduce: boolean;
 }
 
 export interface IapiAnthropicCliBody {
