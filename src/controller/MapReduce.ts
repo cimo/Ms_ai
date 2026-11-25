@@ -227,7 +227,12 @@ export default class MapReduce {
         return chunkObject;
     };
 
-    private responseText = async (signal: AbortSignal, model: string, systemPrompt: string, userPrompt: string): Promise<modelMapReduce.IresultText> => {
+    private responseText = async (
+        signal: AbortSignal,
+        model: string,
+        systemPrompt: string,
+        userPrompt: string
+    ): Promise<modelMapReduce.IresultText> => {
         return instance.api
             .post<modelMapReduce.IapiChatResponse & modelService.IapiEngineError>(
                 "/v1/chat/completions",
@@ -729,7 +734,7 @@ export default class MapReduce {
             "- When the QUESTION names a specific item (for example a code, a name or a date) and MEMORY has more lines or rows, use ONLY the line or row that contains that whole item written exactly the same way: a line where only a part of the item appears, for example the same number in another column, is about a different item.",
             "- MEMORY can come from a document converted from a PDF or an image, where one item can be split over consecutive lines (for example a name that continues on the next line): you MUST join those parts and write the item complete, without losing any item.",
             "- When the QUESTION can refer to more than one value of MEMORY (for example an amount and the tax on that amount), choose the value whose label in MEMORY corresponds best to the words of the QUESTION; if it is still ambiguous, write every possible value together with its label as written in MEMORY.",
-            "- When the QUESTION asks for a calculation (for example a sum, a difference, an average or a percentage), first write every value taken from MEMORY with the document it comes from, then the operation written with those values, then the result: the result is the only number that is not copied from MEMORY, and you MUST compute it step by step and check it before writing it.",
+            "- When the QUESTION asks for a calculation (for example a sum, a difference, an average or a percentage), first write every value taken from MEMORY with the document it comes from, then the operation written with those values, then the result: the result is the only number that is not copied from MEMORY, and you MUST compute it step by step and check it before writing it."
         ];
 
         const answerMissing =
